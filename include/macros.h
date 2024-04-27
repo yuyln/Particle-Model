@@ -10,7 +10,7 @@
 #define da_append(da, item) do { \
     if ((da)->len >= (da)->cap) { \
         if ((da)->cap <= 1) \
-            (da)->cap = 2;\
+            (da)->cap = (da)->len + 2;\
         else\
             (da)->cap *= 1.5; \
         (da)->items = realloc((da)->items, sizeof(*(da)->items) * (da)->cap); \

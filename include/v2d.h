@@ -13,5 +13,6 @@ v2d v2d_add(v2d v1, v2d v2);
 v2d v2d_sub(v2d v1, v2d v2);
 v2d v2d_fac(v2d v, f64 s);
 v2d z_cross_v2d(v2d v);
+f64 v2d_dot(v2d v1, v2d v2);
 
 #endif

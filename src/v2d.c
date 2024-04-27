@@ -29,3 +29,7 @@ v2d v2d_fac(v2d v, f64 s) {
 v2d z_cross_v2d(v2d v) {
     return (v2d){.x = -v.y, .y = v.x};
 }
+
+f64 v2d_dot(v2d v1, v2d v2) {
+    return v1.x * v2.x + v1.y * v2.y;
+}

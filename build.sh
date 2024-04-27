@@ -19,7 +19,7 @@ if [ "$1" = "install" ]; then
     cp -r ./include ~/.local/lib/particle/include
 else
     set -xe
-    CFLAGS="$COMMON_CFLAGS -Wall -Wextra -pedantic -ggdb -Wno-overlength-Strings -Wno-override-init -fsanitize=address -fsanitize=undefined -DDEBUG"
+    CFLAGS="$COMMON_CFLAGS -Wall -Wextra -pedantic -ggdb -fsanitize=address -fsanitize=undefined -DDEBUG"
 
     $CC $CFLAGS -c $FILES $LIBS
 

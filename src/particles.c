@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <math.h>
 
 bool particles_dump_file(FILE *f, Particles ps) {
     u64 s = fwrite(ps.items, sizeof(*ps.items) * ps.len, 1, f);
@@ -63,14 +64,17 @@ void particles_append_particle(Particles *ps, Particle p) {
     da_append(ps, p);
 }
 
-f64 particle_energy_point(Particle p, v2d point) {
-    UNUSED(p);
-    UNUSED(point);
-    return 0;
+f64 particle_energy_point(Particle p, v2d point, const Table *potential) {
+    v2d distance_v2d = v2d_sub(point, p.pos);
+    f64 distance_squared = v2d_dot(distance_v2d, distance_v2d);
+    return table_get_value(potential, sqrt(distance_squared));
 }
 
-v2d particle_force_point(Particle p, v2d point) {
-    UNUSED(p);
-    UNUSED(point);
-    return v2d_s(0);
+v2d particle_force_point(Particle p, v2d point, const Table *force) {
+    v2d distance_v2d = v2d_sub(point, p.pos);
+    f64 distance = sqrt(v2d_dot(distance_v2d, distance_v2d));
+
+    distance_v2d = v2d_fac(distance_v2d, 1.0 / distance);
+
+    return v2d_fac(distance_v2d, table_get_value(force, distance));
 }
