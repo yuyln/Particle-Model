@@ -17,7 +17,7 @@ Table table_init(f64(*func)(f64), f64 xmin, f64 xmax, f64 dx) {
     Table ret = {.value_max = xmax, .value_min = xmin, .delta_value = dx};
     for (f64 x = xmin; x <= xmax; x += dx) {
         da_append(&ret, func(x));
-        da_append(&ret.coefs, coefs_from_points(func(x - 1.0 * dx), func(x - 2.0 / 3.0 * dx), func(x - 1.0 / 3.0 * dx), func(x - 0.0 * dx)));
+        da_append(&ret.coefs, coefs_from_points(func(x + 0.0 * dx), func(x + 1.0 / 3.0 * dx), func(x + 2.0 / 3.0 * dx), func(x + 1.0 * dx)));
     }
     return ret;
 }
