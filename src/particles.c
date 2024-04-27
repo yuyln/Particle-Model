@@ -1,6 +1,6 @@
 #include "particles.h"
 #include "logging.h"
-#include "utils.h"
+#include "macros.h"
 
 #include <stdlib.h>
 #include <errno.h>

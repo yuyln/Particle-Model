@@ -11,5 +11,6 @@
 #include "utils.h"
 #include "particles.h"
 #include "integrate.h"
+#include "table.h"
 
 #endif
