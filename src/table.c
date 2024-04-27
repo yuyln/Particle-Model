@@ -15,10 +15,11 @@ Table table_init(f64(*func)(f64), f64 xmin, f64 xmax, f64 dx) {
 
 f64 table_get_value(const Table *table, f64 x) {
     s64 idx = (x - table->value_min) / table->delta_value;
+    x -= table->value_min;
     if (idx < 0)
-        idx = 0;
-    if ((u64)idx >= table->len)
-        idx = table->len - 1;
+        return table->items[0];
+    else if ((u64)idx >= table->len)
+        return table->items[table->len - 1];
     x = (x - idx * table->delta_value) / table->delta_value;
     Coefs coef = table->coefs.items[idx];
     return coef.a * x * x * x + coef.b * x * x + coef.c * x + coef.d;
@@ -26,10 +27,11 @@ f64 table_get_value(const Table *table, f64 x) {
 
 f64 table_get_derivative(const Table *table, f64 x) {
     s64 idx = (x - table->value_min) / table->delta_value;
+    x -= table->value_min;
     if (idx < 0)
-        idx = 0;
-    if ((u64)idx >= table->len)
-        idx = table->len - 1;
+        return table_get_derivative(table, table->value_min);
+    else if ((u64)idx >= table->len)
+        return table_get_derivative(table, table->value_max);
     x = (x - idx * table->delta_value) / table->delta_value;
     Coefs coef = table->coefs.items[idx];
     f64 ret = (3.0 * coef.a * x * x + 2.0 * coef.b * x + coef.c) / table->delta_value; //What the actual fuck?

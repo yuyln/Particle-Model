@@ -14,9 +14,9 @@
         else\
             (da)->cap *= 1.5; \
         (da)->items = realloc((da)->items, sizeof(*(da)->items) * (da)->cap); \
-        memset(&(da)->items[(da)->len], 0, sizeof(*(da)->items) * ((da)->cap - (da)->len));\
         if (!(da)->items) \
             logging_log(LOG_FATAL, "%s:%d Could not append item to dynamic array. Allocation failed. Buy more RAM I guess, lol", __FILE__, __LINE__); \
+        memset(&(da)->items[(da)->len], 0, sizeof(*(da)->items) * ((da)->cap - (da)->len));\
     } \
     (da)->items[(da)->len] = (item); \
     (da)->len += 1; \
