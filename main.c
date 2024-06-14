@@ -1,9 +1,16 @@
 #include "particle_simulation.h"
+#include "table.h"
+#include "bessel.h"
 
 #include <stdlib.h>
 #include <math.h>
 
+f64 dra() {
+    return rand() / (f64)RAND_MAX;
+}
+
 f64 test(f64 x, f64 y, void *dummy) {
+    return 0;
     return 0.5 * (sin(2.0 * M_PI * 10 * x) + sin(2.0 * M_PI * 10 * y));
 }
 
@@ -11,37 +18,66 @@ f64 test(f64 x, f64 y, void *dummy) {
 #define HEIGHT 600
 
 int main(void) {
-    f64 max_x = 1;
-    f64 max_y = 1;
-    DefectMap defect_map = defect_map_init(200, 200, v2d_c(0, max_x), v2d_c(0, max_y), test, NULL);
-    RGBA32 *defect_map_rgb = calloc(WIDTH * HEIGHT * sizeof(*defect_map_rgb), 1);
-
     window_init("Defect Map", WIDTH, HEIGHT);
+    RGBA32 *display = calloc(WIDTH * HEIGHT * sizeof(*display), 1);
 
-    for (u64 idy = 0; idy < HEIGHT; ++idy) {
-        f64 y = idy / (f64)HEIGHT * max_y;
-        for (u64 idx = 0; idx < WIDTH; ++idx) {
-            f64 x = idx / (f64)WIDTH * max_x;
-            v2d f = defect_map_force_xy(x, y, defect_map);
+    f64 lx = 10;
+    f64 ly = lx * sqrt(3.0) / 2.0;
 
-            f64 val = 0.5 * (defect_map_potential_xy(x, y, defect_map) + 1);
-            f.x = (f.x + M_PI * 10) / (2.0 * M_PI * 10);
-            f.y = (f.y + M_PI * 10) / (2.0 * M_PI * 10);
+    v2d sx = v2d_c(0, lx);
+    v2d sy = v2d_c(0, ly);
 
-            if (val > 1 || f.x > 1 || f.y > 1)
-                logging_log(LOG_INFO, "val: %f - f: %f %f", val, f.x, f.y);
+    DefectMap defect_map = defect_map_init(200, 200, sx, sy, test, NULL);
+    Particles ps = {0};
+    Particles ps0 = {0};
 
-            defect_map_rgb[idy * WIDTH + idx] = (RGBA32){.r = 240 * f.x, .g = 240 * f.y, .b = 0, .a = 255};
-        }
-    }
+    for (u64 i = 0; i < 81; ++i)
+        da_append(&ps, ((Particle){.pos = v2d_c(lx * dra(), ly * dra()), .magnus_ratio = 0}));
+    
+    for (u64 i = 0; i < ps.len; ++i)
+        da_append(&ps0, ps.items[i]);
 
+    BoxedParticles bp = boxed_particles_init(1, 1, sx, sy, ps);
+    boxed_particles_update(&bp);
+    Table table = table_init(bessk0, EPS, 30, 50000);
+
+    u64 counter = 0;
     while (!window_should_close()) {
-        window_draw_from_bytes(defect_map_rgb, 0, 0, WIDTH, HEIGHT);
+        for (u64 t = 0; t < 1; ++t) {
+            for (u64 i = 0; i < ps.len; ++i) {
+                v2d force = force_at_xy(bp.ps.items[i].pos, bp, table, defect_map);
+                ps0.items[i].pos = v2d_add(bp.ps.items[i].pos, v2d_fac(force, 0.01));
+                ps0.items[i].pos = boundary_condition(ps0.items[i].pos, sx, sy);
+            }
+
+            for (u64 i = 0; i < ps.len; ++i) {
+                ps.items[i].pos = ps0.items[i].pos;
+            }
+            boxed_particles_update(&bp);
+        }
+
+
+        for (u64 i = 0; i < WIDTH * HEIGHT; ++i)
+            display[i] = (RGBA32){.r = 255, .g = 255, .b = 255, .a = 255};
+        for (u64 i = 0; i < ps.len; ++i) {
+            u64 display_x = (bp.ps.items[i].pos.x - sx.p[0]) / (sx.p[1] - sx.p[0]) * WIDTH;
+            u64 display_y = (bp.ps.items[i].pos.y - sy.p[0]) / (sy.p[1] - sy.p[0]) * HEIGHT;
+            for (s64 dy = -5; dy < 5; ++dy)
+                for (s64 dx = -5; dx < 5; ++dx)
+                    if ((display_y + dy) >= 0 && (display_y + dy) < HEIGHT && (display_x + dx) >= 0 && (display_x + dx) < WIDTH)
+                        display[(display_y + dy) * WIDTH + (display_x + dx)] = (RGBA32){.r = 0, .g = 0, .b = 0, .a = 255};
+        }
+        window_draw_from_bytes(display, 0, 0, WIDTH, HEIGHT);
         window_render();
         window_poll();
+        counter += 1;
     }
 
     defect_map_deinit(&defect_map);
-    free(defect_map_rgb);
+    free(display);
+    boxed_particles_deinit(&bp);
+    free(ps.items);
+    table_deinit(&table);
+    free(ps0.items);
     return 0;
 }

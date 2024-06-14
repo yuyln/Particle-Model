@@ -13,5 +13,6 @@
 #include "integrate.h"
 #include "table.h"
 #include "defect_map.h"
+#include "simulation.h"
 
 #endif

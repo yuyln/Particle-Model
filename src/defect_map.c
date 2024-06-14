@@ -188,7 +188,7 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
         ret.y = result / map.dy;
     }
 
-     return ret;
+     return v2d_fac(ret, -1);
 }
 
 void defect_map_deinit(DefectMap *map) {
