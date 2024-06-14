@@ -7,6 +7,15 @@
 #include <string.h>
 #include <math.h>
 
+f64 boundary_condition_f64(f64 x, v2d lim) {
+    if (x < lim.p[0] || x > lim.p[1]) {
+        f64 size_x = lim.p[1] - lim.p[0];
+        x = x - floor((x - lim.p[0]) / size_x) * size_x;
+    }
+
+    return x;
+}
+
 v2d boundary_condition(v2d pos, v2d limit_x, v2d limit_y) {
     if (pos.x < limit_x.p[0] || pos.x > limit_x.p[1]) {
         f64 size_x = limit_x.p[1] - limit_x.p[0];
@@ -38,4 +47,8 @@ bool read_entire_file(String path, String *str) {
     }
 
     return ret;
+}
+
+f64 lerp(f64 a, f64 b, f64 t) {
+    return (b - a) * t + a;
 }
