@@ -2,7 +2,7 @@
 
 set -xe
 
-LIBS="-lm `pkg-config --static --libs x11 xext`"
+LIBS="-lm `pkg-config --static --libs x11 xext` -fopenmp"
 COMMON_CFLAGS="-DnPROFILING -O3 -I ./include"
 FILES="`find ./src -maxdepth 1 -type f -name "*.c"` ./src/platform_specific/render_linux_x11.c"
 CC="gcc"
