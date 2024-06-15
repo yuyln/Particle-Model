@@ -67,7 +67,7 @@ void particles_append_particle(Particles *ps, Particle p) {
 f64 particle_energy_point(Particle p, v2d point, const Table potential) {
     v2d distance_v2d = v2d_sub(point, p.pos);
     f64 distance_squared = v2d_dot(distance_v2d, distance_v2d);
-    return table_get_value(potential, sqrt(distance_squared));
+    return p.u0 * table_get_value(potential, sqrt(distance_squared));
 }
 
 v2d particle_force_point(Particle p, v2d point, const Table potential) {
@@ -76,5 +76,5 @@ v2d particle_force_point(Particle p, v2d point, const Table potential) {
 
     distance_v2d = v2d_fac(distance_v2d, 1.0 / distance);
 
-    return v2d_fac(distance_v2d, -table_get_derivative(potential, distance));
+    return v2d_fac(distance_v2d, -p.u0 * table_get_derivative(potential, distance));
 }

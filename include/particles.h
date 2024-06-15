@@ -9,7 +9,10 @@
 
 typedef struct {
     v2d pos;
-    f64 magnus_ratio;
+    f64 magnus;
+    f64 damping;
+    f64 u0;
+    f64 radius;
 } Particle;
 
 typedef struct {
