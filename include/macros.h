@@ -28,4 +28,6 @@
 #define debug_assert(cond)
 #endif
 
+#define PUN(t, x) (*((t*)((&(x)))))
+
 #endif
