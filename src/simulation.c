@@ -1,6 +1,9 @@
 #include "simulation.h"
 #include "macros.h"
 #include "logging.h"
+#include "utils.h"
+
+#include <math.h>
 
 f64 system_energy(BoxedParticles bp, Table potential, DefectMap defect_map) {
     f64 energy = 0;
@@ -88,7 +91,9 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
         temp = temp_func(t, p.pos, temp_data);
 
     if (temp > 0) {
-        //@TODO: gaussian distribution
+        u64 seed = *(u64*)(&p.pos.x);
+        temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
+        temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
 
     v2d force = temp_vector;
@@ -139,8 +144,11 @@ v2d force_at_particle_rk2(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     if (temp_func)
         temp = temp_func(t, p.pos, temp_data);
+
     if (temp > 0) {
-        //@TODO: gaussian distribution
+        u64 seed = *(u64*)(&p.pos.x);
+        temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
+        temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
 
     v2d force = temp_vector;
@@ -175,7 +183,9 @@ v2d force_at_particle_euler(f64 t, f64 dt, u64 index, Particle p, BoxedParticles
         temp = temp_func(t, p.pos, temp_data);
 
     if (temp > 0) {
-        //@TODO: gaussian distribution
+        u64 seed = *(u64*)(&p.pos.x);
+        temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
+        temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
 
     v2d force = temp_vector;
