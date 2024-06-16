@@ -15,7 +15,6 @@ f64 ky = 2.0 * M_PI * n / ly;
 
 f64 moire_lattice(f64 x, f64 y, void *unused) {
     UNUSED(unused);
-    return 0;
     return (cos(kx * x) + cos(ky * y)) * 2;
 }
 
@@ -36,10 +35,10 @@ f64 particle_potential(f64 distance, void *unused) {
 int main(void) {
     Particles ps = {0};
 
-//    for (u64 i = 1; i < 2 * n; i += 2)
-//        for (u64 j = 1; j < 2 * n; j += 2)
-//            da_append(&ps, ((Particle){.pos = v2d_c(j * M_PI / kx, i * M_PI / ky), .magnus = sin(M_PI / 4.0), .damping = cos(M_PI / 4.0), .u0 = 1}));
-//
+    for (u64 i = 1; i < 2 * n; i += 2)
+        for (u64 j = 1; j < 2 * n; j += 2)
+            da_append(&ps, ((Particle){.pos = v2d_c(j * M_PI / kx, i * M_PI / ky), .magnus = sin(M_PI / 4.0), .damping = cos(M_PI / 4.0), .u0 = 1}));
+
     {
         s32 yc0 = M_PI * 5 / ky;
         s32 xc0 = M_PI * 5 / kx;
@@ -50,13 +49,13 @@ int main(void) {
         s32 xc = (xc0 + xc1) / 2;
         s32 yc = (yc0 + yc1) / 2;
 
-        da_append(&ps, ((Particle){.pos = v2d_c(xc, yc), .magnus = sin(26 * M_PI / 180.0), .damping = cos(26 * M_PI / 180.0), .u0 = 1}));
+        da_append(&ps, ((Particle){.pos = v2d_c(xc, yc), .magnus = ps.items[ps.len - 1].magnus, .damping = ps.items[ps.len - 1].damping, .u0 = ps.items[ps.len - 1].u0}));
     }
 
     Table table = table_init(particle_potential, EPS, 10, 0.001, NULL);
     DefectMap defect_map = defect_map_init(2000, 2000, sx, sy, moire_lattice, NULL);
 
-    f64 current = 1;
+    f64 current = 2;
     IntegrateParams iparams = integrate_params_init();
     iparams.drive_function = drive;
     iparams.drive_data = &current;
