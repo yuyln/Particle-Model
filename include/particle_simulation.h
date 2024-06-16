@@ -14,5 +14,7 @@
 #include "table.h"
 #include "defect_map.h"
 #include "simulation.h"
+#include "bessel.h"
+#include "simulation_render.h"
 
 #endif

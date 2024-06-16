@@ -4,11 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-Table table_init(f64(*func)(f64), f64 xmin, f64 xmax, f64 dx) {
+Table table_init(f64(*func)(f64, void*), f64 xmin, f64 xmax, f64 dx, void *user_data) {
     Table ret = {.value_max = xmax, .value_min = xmin, .delta_value = dx};
     for (f64 x = xmin; x <= xmax; x += dx) {
-        da_append(&ret, func(x));
-        da_append(&ret.coefs, coefs_from_points(func(x + 0.0 / 3.0 * dx), func(x + 1.0 / 3.0 * dx), func(x + 2.0 / 3.0 * dx), func(x + 3.0 / 3.0 * dx)));
+        da_append(&ret, func(x, user_data));
+        da_append(&ret.coefs, coefs_from_points(func(x + 0.0 / 3.0 * dx, user_data), func(x + 1.0 / 3.0 * dx, user_data), func(x + 2.0 / 3.0 * dx, user_data), func(x + 3.0 / 3.0 * dx, user_data)));
     }
     return ret;
 }
