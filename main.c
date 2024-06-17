@@ -24,6 +24,9 @@ v2d drive(f64 t, v2d xy, void *d) {
 }
 
 f64 temperature(f64 t, v2d xy, void *d) {
+    UNUSED(t);
+    UNUSED(xy);
+    UNUSED(d);
     return 0.00;
 }
 
@@ -55,13 +58,44 @@ int main(void) {
     Table table = table_init(particle_potential, EPS, 10, 0.001, NULL);
     DefectMap defect_map = defect_map_init(2000, 2000, sx, sy, moire_lattice, NULL);
 
-    f64 current = 2;
     IntegrateParams iparams = integrate_params_init();
     iparams.drive_function = drive;
-    iparams.drive_data = &current;
     iparams.temperature_function = temperature;
-    iparams.interval_for_information = 1000;
-    //integrate(ps, table, defect_map, iparams);
-    simulation_render_integrate(ps, table, defect_map, iparams, 600, 600);
+    iparams.interval_for_information = 0;
+
+    FILE *data_per_current = fopen("data.dat", "w");
+    if (!data_per_current)
+        logging_log(LOG_FATAL, "Could not open file for writing velocities versus drive");
+    if (fprintf(data_per_current, "Fd,Vx,Vy,R,Theta\n") < 0)
+        logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
+
+    for (f64 current = 0; current < 3.0; current += 0.01) {
+        u64 counter = 0;
+        for (u64 i = 1; i < 2 * n; i += 2)
+            for (u64 j = 1; j < 2 * n; j += 2)
+                ps.items[counter++].pos = v2d_c(j * M_PI / kx, i * M_PI / ky);
+
+        {
+            s32 yc0 = M_PI * 5 / ky;
+            s32 xc0 = M_PI * 5 / kx;
+
+            s32 yc1 = M_PI * 7 / ky;
+            s32 xc1 = M_PI * 7 / kx;
+
+            s32 xc = (xc0 + xc1) / 2;
+            s32 yc = (yc0 + yc1) / 2;
+
+            ps.items[counter++].pos = v2d_c(xc, yc);
+        }
+        iparams.drive_data = &current;
+        v2d avg_vel = integrate(ps, table, defect_map, iparams);
+        if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
+            logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
+        //simulation_render_integrate(ps, table, defect_map, iparams, 600, 600);
+    }
+    fclose(data_per_current);
+    free(ps.items);
+    defect_map_deinit(&defect_map);
+    table_deinit(&table);
     return 0;
 }
