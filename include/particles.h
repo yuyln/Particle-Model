@@ -13,6 +13,7 @@ typedef struct {
     f64 damping;
     f64 u0;
     f64 radius;
+    v2d force_others;
 } Particle;
 
 typedef struct {

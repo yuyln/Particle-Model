@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include <math.h>
+#include <string.h>
 
 f64 system_energy(BoxedParticles bp, Table potential, DefectMap defect_map) {
     f64 energy = 0;
@@ -59,6 +60,7 @@ v2d force_at_xy(u64 ignore_index, v2d xy, BoxedParticles bp, Table potential, De
     v2d force = v2d_s(0);
     s64 idx = boxed_particles_get_idx(bp, xy.x);
     s64 idy = boxed_particles_get_idy(bp, xy.y);
+    bp.ps.items[ignore_index].force_others = v2d_s(0);
     for (s32 dy = -1; dy <= 1; ++dy) {
         for (s32 dx = -1; dx <= 1; ++dx) {
             u64 idy_interaction = (((idy + dy) % (s64)bp.rows) + (s64)bp.rows) % bp.rows;
@@ -69,13 +71,23 @@ v2d force_at_xy(u64 ignore_index, v2d xy, BoxedParticles bp, Table potential, De
             v2d xy_local = v2d_c((xy.x - idx * bp.dx) + ((s64)idx_interaction - dx) * bp.dx,
                                  (xy.y - idy * bp.dy) + ((s64)idy_interaction - dy) * bp.dy);
 
-            for (u64 n = 0; n < bp.n_particle[i_interaction]; ++n)
-                if (!(CLOSE_ENOUGH(xy_local.x, bp.ps.items[indices_current[n]].pos.x, EPS) &&
-                      CLOSE_ENOUGH(xy_local.y, bp.ps.items[indices_current[n]].pos.y, EPS)))
-                    if (indices_current[n] != ignore_index)
-                        force = v2d_add(force, particle_force_point(bp.ps.items[indices_current[n]], xy_local, potential));
+            for (u64 n = 0; n < bp.n_particle[i_interaction]; ++n) {
+                if (CLOSE_ENOUGH(xy_local.x, bp.ps.items[indices_current[n]].pos.x, EPS) &&
+                    CLOSE_ENOUGH(xy_local.y, bp.ps.items[indices_current[n]].pos.y, EPS))
+                    continue;
+                if (indices_current[n] == ignore_index)
+                    continue;
+                if (bp.particles_interacted[ignore_index * bp.ps.len + indices_current[n]])
+                    continue;
+                v2d force_between = particle_force_point(bp.ps.items[indices_current[n]], xy_local, potential);
+                bp.ps.items[ignore_index].force_others = v2d_add(bp.ps.items[ignore_index].force_others, force_between);
+                bp.ps.items[indices_current[n]].force_others = v2d_sub(bp.ps.items[indices_current[n]].force_others, force_between);
+                bp.particles_interacted[ignore_index * bp.ps.len + indices_current[n]] = true;
+                bp.particles_interacted[indices_current[n] * bp.ps.len + ignore_index] = true;
+            }
         }
     }
+    force = v2d_add(force, bp.ps.items[ignore_index].force_others);
     force = v2d_add(force, defect_map_force_xy(xy.x, xy.y, defect_map));
     return force;
 }
@@ -104,6 +116,7 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk1.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk1.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     force = temp_vector;
     force = v2d_add(force, force_at_xy(index, v2d_add(p.pos, v2d_fac(rk1, dt * 0.5)), bp, potential, defect_map));
@@ -113,6 +126,7 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk2.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk2.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     force = temp_vector;
     force = v2d_add(force, force_at_xy(index, v2d_add(p.pos, v2d_fac(rk2, dt * 0.5)), bp, potential, defect_map));
@@ -122,6 +136,7 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk3.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk3.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     force = temp_vector;
     force = v2d_add(force, force_at_xy(index, v2d_add(p.pos, v2d_fac(rk3, dt)), bp, potential, defect_map));
@@ -131,6 +146,7 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk4.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk4.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     return v2d_fac(v2d_add(v2d_add(rk1, v2d_fac(rk2, 2.0)), v2d_add(v2d_fac(rk3, 2.0), rk4)), dt / 6.0);
 }
@@ -159,6 +175,7 @@ v2d force_at_particle_rk2(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk1.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk1.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     force = temp_vector;
     force = v2d_add(force, force_at_xy(index, v2d_add(p.pos, v2d_fac(rk1, dt)), bp, potential, defect_map));
@@ -168,6 +185,7 @@ v2d force_at_particle_rk2(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
 
     rk2.x = (p.damping * force.x + p.magnus * force.y) / den;
     rk2.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
 
     return v2d_fac(v2d_add(rk1, rk2), dt / 2.0);
@@ -194,6 +212,7 @@ v2d force_at_particle_euler(f64 t, f64 dt, u64 index, Particle p, BoxedParticles
         force = v2d_add(force, drive_fun(t, p.pos, drive_data));
     ret.x = (p.damping * force.x + p.magnus * force.y) / den;
     ret.y = (p.damping * force.y - p.magnus * force.x) / den;
+    memset(&bp.particles_interacted[index * bp.ps.len], 0, sizeof(*bp.particles_interacted) * bp.ps.len);
 
     return v2d_fac(ret, dt);
 }

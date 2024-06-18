@@ -17,6 +17,10 @@ BoxedParticles boxed_particles_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y
     if (!ret.n_particle)
         logging_log(LOG_FATAL, "Could not allocate n_particle for boxed particles");
 
+    ret.particles_interacted = calloc(sizeof(*ret.particles_interacted) * ps.len * ps.len, 1);
+    if (!ret.particles_interacted)
+        logging_log(LOG_FATAL, "Could not allocate particles_interacted for boxed particles");
+
     return ret;
 }
 
@@ -55,5 +59,6 @@ u64 *boxed_particles_get_indices(BoxedParticles bp, u64 row, u64 col) {
 void boxed_particles_deinit(BoxedParticles *bp) {
     free(bp->indices);
     free(bp->n_particle);
+    free(bp->particles_interacted);
     memset(bp, 0, sizeof(*bp));
 }

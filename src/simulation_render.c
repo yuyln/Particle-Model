@@ -2,6 +2,7 @@
 #include "render.h"
 #include "simulation.h"
 #include "logging.h"
+#include "profiler.h"
 
 #include <stdlib.h>
 #include <float.h>
@@ -63,8 +64,10 @@ void simulation_render_integrate(Particles ps, Table particle_potential, DefectM
 
     byte state = 'p';
     while (!window_should_close()) {
+        profiler_start_measure("STEP_TIME");
         for (u64 t = 0; t < steps_per_frame; ++t)
             integrate_context_step(&ctx);
+        profiler_end_measure("STEP_TIME");
 
         switch (state) {
             case 'p': 
@@ -86,5 +89,6 @@ void simulation_render_integrate(Particles ps, Table particle_potential, DefectM
     }
     free(display);
     integrate_context_deinit(&ctx);
+    profiler_print_measures(stdout);
 }
 

@@ -7,6 +7,7 @@ typedef struct {
     u64 rows, cols;
     u64 *indices;
     u64 *n_particle;
+    bool *particles_interacted;
     f64 dx, dy;
     v2d limit_x, limit_y;
 } BoxedParticles;
