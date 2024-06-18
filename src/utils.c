@@ -36,7 +36,7 @@ f64 normal_distribution(Xorshift64State *state) {
 }
 
 f64 boundary_condition_f64(f64 x, v2d lim) {
-    if (x < lim.p[0] || x > lim.p[1]) {
+    if (x < lim.p[0] || x >= lim.p[1]) {
         f64 size_x = lim.p[1] - lim.p[0];
         x = x - floor((x - lim.p[0]) / size_x) * size_x;
     }

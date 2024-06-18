@@ -111,14 +111,13 @@ void defect_map_calculate_coefs(DefectMap *it) {
 }
 
 f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
-    s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
-    s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
-    idx = ((idx % map.cols) + map.cols) % map.cols;
-    idy = ((idy % map.rows) + map.rows) % map.rows;
-    MapCoeff coefs = map.coefs[idy * map.cols + idx];
-
     x = boundary_condition_f64(x, map.limit_x);
     y = boundary_condition_f64(y, map.limit_y);
+
+    s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
+    s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
+    MapCoeff coefs = map.coefs[idy * map.cols + idx];
+
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
 
@@ -139,14 +138,13 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
 }
 
 v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
-    s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
-    s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
-    idx = ((idx % map.cols) + map.cols) % map.cols;
-    idy = ((idy % map.rows) + map.rows) % map.rows;
-    MapCoeff coefs = map.coefs[idy * map.cols + idx];
-
     x = boundary_condition_f64(x, map.limit_x);
     y = boundary_condition_f64(y, map.limit_y);
+
+    s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
+    s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
+    MapCoeff coefs = map.coefs[idy * map.cols + idx];
+
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
 

@@ -3,20 +3,29 @@
 set -xe
 
 LIBS="-lm `pkg-config --static --libs x11 xext` -fopenmp"
-COMMON_CFLAGS="-DnPROFILING -O3 -I ./include"
+COMMON_CFLAGS="-O3 -I ./include"
 FILES="`find ./src -maxdepth 1 -type f -name "*.c"` ./src/platform_specific/render_linux_x11.c"
 CC="gcc"
 
+if test -f ./libparticle.a; then
+    rm ./libparticle.a
+fi
+
 if [ "$1" = "install" ]; then
-    $CC $CFLAGS -c $FILES $LIBS
+    $CC $COMMON_CFLAGS $CFLAGS -c $FILES $LIBS
+
+    if test -f ~/.local/lib/particle; then
+        rm -r ~/.local/lib/particle
+    fi
+    mkdir --parents ~/.local/lib/particle
 
     FILES_OBJ="`find -type f -name "*.o"`"
-    ar cr libatomistic.a $FILES_OBJ
+    ar cr libparticle.a $FILES_OBJ
 
     rm $FILES_OBJ
     mkdir --parents ~/.local/lib/particle/include
     cp ./libparticle.a ~/.local/lib/particle/
-    cp -r ./include ~/.local/lib/particle/include
+    cp -r ./include/* ~/.local/lib/particle/include
 else
     set -xe
     CFLAGS="$COMMON_CFLAGS -Wall -Wextra -pedantic -ggdb -DDEBUG"

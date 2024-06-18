@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-static const f64 lx = 36;
+static const f64 lx = 1;
 static const f64 ly = lx;
 
 static const v2d sx = (v2d){.p[0] = 0, .p[1] = lx};
@@ -35,7 +35,7 @@ f64 particle_potential(f64 distance, void *unused) {
     return bessk0(distance);
 }
 
-int main(void) {
+int main2(void) {
     Particles ps = {0};
 
     for (u64 i = 1; i < 2 * n; i += 2)
@@ -62,6 +62,8 @@ int main(void) {
     iparams.drive_function = drive;
     iparams.temperature_function = temperature;
     iparams.interval_for_information = 0;
+    iparams.dt = 0.01;
+    iparams.total_time = iparams.dt * 3e5;
 
     FILE *data_per_current = fopen("data.dat", "w");
     if (!data_per_current)
@@ -70,6 +72,7 @@ int main(void) {
         logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
 
     for (f64 current = 0; current < 3.0; current += 0.01) {
+        fflush(data_per_current);
         u64 counter = 0;
         for (u64 i = 1; i < 2 * n; i += 2)
             for (u64 j = 1; j < 2 * n; j += 2)
@@ -97,5 +100,23 @@ int main(void) {
     free(ps.items);
     defect_map_deinit(&defect_map);
     table_deinit(&table);
+    return 0;
+}
+
+int main(void) {
+    DefectMap defect_map = defect_map_init(2000, 2000, sx, sy, moire_lattice, NULL);
+    u64 w = 5000, h = 5000;
+    FILE *test = fopen("test.dat", "w");
+    for (s64 r = 0; r <= h; ++r) {
+        f64 y = r / (f64)h;
+        for (s64 c = 0; c <= w; ++c) {
+            f64 x = c / (f64)w;
+            v2d f = defect_map_force_xy(x, y, defect_map);
+            if (r % 5 == 0 && c % 5 == 0)
+                fprintf(test, "%.15e,%.15e,%.15e,%.15e\n", x, y, f.x, f.y);
+        }
+    }
+    fclose(test);
+    defect_map_deinit(&defect_map);
     return 0;
 }

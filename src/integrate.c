@@ -124,6 +124,7 @@ v2d integrate(Particles ps, Table particle_potential, DefectMap defects, Integra
     v2d avg_vel = v2d_s(0);
     for (u64 i = 0; i < ctx.ps0.len; ++i)
         avg_vel = v2d_add(avg_vel, ctx.avg_vel[i]);
+    avg_vel = v2d_fac(avg_vel, 1.0 / ctx.step);
     integrate_context_deinit(&ctx);
-    return v2d_fac(avg_vel, 1.0 / ctx.step);
+    return avg_vel;
 }
