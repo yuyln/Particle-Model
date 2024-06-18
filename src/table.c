@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 Table table_init(f64(*func)(f64, void*), f64 xmin, f64 xmax, f64 dx, void *user_data) {
     Table ret = {.value_max = xmax, .value_min = xmin, .delta_value = dx};
@@ -49,4 +50,11 @@ void table_deinit(Table *table) {
     free(table->items);
     free(table->coefs.items);
     memset(table, 0, sizeof(*table));
+}
+
+f64 table_get_cut(Table table, f64 max_derivative) {
+    f64 cut = 0;
+    while (fabs(table_get_derivative(table, cut)) > max_derivative)
+        cut += table.delta_value / 2.0;
+    return cut;
 }

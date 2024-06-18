@@ -30,5 +30,6 @@ f64 table_get_value(const Table table, f64 x);
 f64 table_get_derivative(const Table table, f64 x);
 Coefs coefs_from_points(f64 p0, f64 p1, f64 p2, f64 p3);
 void table_deinit(Table *table);
+f64 table_get_cut(Table table, f64 max_derivative);
 
 #endif

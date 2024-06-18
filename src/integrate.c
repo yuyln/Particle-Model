@@ -14,6 +14,7 @@ IntegrateParams integrate_params_init() {
     ret.total_time = 3e6 * ret.dt;
     ret.path_for_information = "integrate_info.csv";
     ret.interval_for_information = 1000;
+    ret.max_derivative = 1.0e-4;
     return ret;
 }
 
@@ -24,9 +25,9 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
     for (u64 i = 0; i < ps.len; ++i)
         da_append(&ctx.ps0, ps.items[i]);
 
-    f64 cut = 0;
-    while (table_get_value(particle_potential, cut) > 1.0e-4)
-        cut += particle_potential.delta_value;
+    f64 cut = table_get_cut(particle_potential, params.max_derivative);
+
+    logging_log(LOG_INFO, "Particle potential cut found: %.15e. Potential(cut) = %.15e | Derivative(cut) = %.15e", cut, table_get_value(particle_potential, cut), table_get_derivative(particle_potential, cut));
 
     u64 rows = (defects.limit_y.p[1] - defects.limit_y.p[0]) / cut;
     u64 cols = (defects.limit_x.p[1] - defects.limit_x.p[0]) / cut;
@@ -69,6 +70,7 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
 
     ctx.expected_steps = ctx.params.total_time / ctx.params.dt + 1;
 
+    integrate_context_print_info(ctx);
     return ctx;
 }
 
@@ -114,6 +116,27 @@ void integrate_context_step(IntegrateContext *ctx) {
     boxed_particles_update(&ctx->bp);
     ctx->time += ctx->params.dt;
     ctx->step += 1;
+}
+
+void integrate_context_print_info(IntegrateContext ctx) {
+    logging_log(LOG_INFO, "-----------------------");
+    logging_log(LOG_INFO, "Integrate Context Info:");
+    logging_log(LOG_INFO, "dt: %.15e", ctx.params.dt);
+    logging_log(LOG_INFO, "Total time: %.15e", ctx.params.total_time);
+    logging_log(LOG_INFO, "Information cut: %"PRIu64, ctx.params.interval_for_information);
+    logging_log(LOG_INFO, "Information path: %s", ctx.params.path_for_information);
+    logging_log(LOG_INFO, "Particle count: %"PRIu64, ctx.ps0.len);
+    logging_log(LOG_INFO, "Boxed particles limits: x(%.15e, %.15e) y(%.15e, %.15e)", ctx.bp.limit_x.p[0], ctx.bp.limit_x.p[1], ctx.bp.limit_y.p[0], ctx.bp.limit_y.p[1]);
+    logging_log(LOG_INFO, "Boxed particles boxes (rows x cols): %"PRIu64" x %"PRIu64, ctx.bp.rows, ctx.bp.cols);
+    logging_log(LOG_INFO, "Boxed particles dx x dy: %.15e x %.15e", ctx.bp.dx, ctx.bp.dy);
+    logging_log(LOG_INFO, "Potential table size: %"PRIu64, ctx.potential.len);
+    logging_log(LOG_INFO, "Potential table interval: (%.15e, %.15e)", ctx.potential.value_min, ctx.potential.value_max);
+    logging_log(LOG_INFO, "Potential table delta: %.15e", ctx.potential.delta_value);
+    logging_log(LOG_INFO, "Defect map rows x cols: %"PRIu64" x %"PRIu64, ctx.defects.rows, ctx.defects.cols);
+    logging_log(LOG_INFO, "Defect map interval: x(%.15e, %.15e) y(%.15e, %.15e)", ctx.defects.limit_x.p[0], ctx.defects.limit_x.p[1], ctx.defects.limit_y.p[0], ctx.defects.limit_y.p[1]);
+    logging_log(LOG_INFO, "Defect map dx x dy: %.15e x %.15e", ctx.defects.dx, ctx.defects.dy);
+    logging_log(LOG_INFO, "Integrate expected steps: %"PRIu64, ctx.expected_steps);
+    logging_log(LOG_INFO, "-----------------------");
 }
 
 v2d integrate(Particles ps, Table particle_potential, DefectMap defects, IntegrateParams params) {

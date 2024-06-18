@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-static const f64 lx = 1;
+static const f64 lx = 36;
 static const f64 ly = lx;
 
 static const v2d sx = (v2d){.p[0] = 0, .p[1] = lx};
@@ -35,7 +35,9 @@ f64 particle_potential(f64 distance, void *unused) {
     return bessk0(distance);
 }
 
-int main2(void) {
+//@TODO: SIMD: DefectMap, v2d and Table
+//@TODO: Avoid jumping around in memory when using inner boxes
+int main(void) {
     Particles ps = {0};
 
     for (u64 i = 1; i < 2 * n; i += 2)
@@ -100,23 +102,5 @@ int main2(void) {
     free(ps.items);
     defect_map_deinit(&defect_map);
     table_deinit(&table);
-    return 0;
-}
-
-int main(void) {
-    DefectMap defect_map = defect_map_init(2000, 2000, sx, sy, moire_lattice, NULL);
-    u64 w = 5000, h = 5000;
-    FILE *test = fopen("test.dat", "w");
-    for (s64 r = 0; r <= h; ++r) {
-        f64 y = r / (f64)h;
-        for (s64 c = 0; c <= w; ++c) {
-            f64 x = c / (f64)w;
-            v2d f = defect_map_force_xy(x, y, defect_map);
-            if (r % 5 == 0 && c % 5 == 0)
-                fprintf(test, "%.15e,%.15e,%.15e,%.15e\n", x, y, f.x, f.y);
-        }
-    }
-    fclose(test);
-    defect_map_deinit(&defect_map);
     return 0;
 }
