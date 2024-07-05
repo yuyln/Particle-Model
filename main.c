@@ -73,7 +73,7 @@ int main(void) {
     if (fprintf(data_per_current, "Fd,Vx,Vy,R,Theta\n") < 0)
         logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
 
-    for (f64 current = 0; current < 3.0; current += 0.01) {
+    for (f64 current = 1.5; current < 3.0; current += 0.01) {
         fflush(data_per_current);
         u64 counter = 0;
         for (u64 i = 1; i < 2 * n; i += 2)
@@ -93,10 +93,10 @@ int main(void) {
             ps.items[counter++].pos = v2d_c(xc, yc);
         }
         iparams.drive_data = &current;
-        v2d avg_vel = integrate(ps, table, defect_map, iparams);
-        if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
-            logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
-        //simulation_render_integrate(ps, table, defect_map, iparams, 600, 600);
+        //v2d avg_vel = integrate(ps, table, defect_map, iparams);
+        //if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
+        //    logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
+        simulation_render_integrate(ps, table, defect_map, iparams, 600, 600);
     }
     fclose(data_per_current);
     free(ps.items);
