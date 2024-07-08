@@ -19,8 +19,10 @@ f64 moire_lattice(f64 x, f64 y, void *unused) {
 }
 
 v2d drive(f64 t, v2d xy, void *d) {
+    UNUSED(t);
+    UNUSED(xy);
     f64 c = *(f64*)d;
-    return z_cross_v2d(v2d_c(c, 0));
+    return z_cross_v2d(v2d_c(0, c));
 }
 
 f64 temperature(f64 t, v2d xy, void *d) {
@@ -96,7 +98,7 @@ int main(void) {
         //v2d avg_vel = integrate(ps, table, defect_map, iparams);
         //if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
         //    logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
-        simulation_render_integrate(ps, table, defect_map, iparams, 600, 600);
+        simulation_render_integrate(ps, table, defect_map, iparams, 1000, 1000);
     }
     fclose(data_per_current);
     free(ps.items);

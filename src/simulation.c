@@ -6,6 +6,11 @@
 #include <math.h>
 #include <string.h>
 
+union f64_u64 {
+    f64 f;
+    u64 u;
+};
+
 f64 system_energy(BoxedParticles bp, Table potential, DefectMap defect_map) {
     f64 energy = 0;
     for (u64 ip = 0; ip < bp.ps.len; ++ip) {
@@ -92,6 +97,7 @@ v2d force_at_xy(u64 ignore_index, v2d xy, BoxedParticles bp, Table potential, De
     return force;
 }
 
+
 v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles bp, Table potential, DefectMap defect_map, v2d(*drive_fun)(f64, v2d, void *), void *drive_data, f64(*temp_func)(f64, v2d, void *), void *temp_data) {
     v2d rk1, rk2, rk3, rk4;
 
@@ -103,7 +109,7 @@ v2d force_at_particle_rk4(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
         temp = temp_func(t, p.pos, temp_data);
 
     if (temp > 0) {
-        u64 seed = *(u64*)(&p.pos.x);
+        u64 seed = (union f64_u64){.f = p.pos.x}.u;
         temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
         temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
@@ -162,7 +168,7 @@ v2d force_at_particle_rk2(f64 t, f64 dt, u64 index, Particle p, BoxedParticles b
         temp = temp_func(t, p.pos, temp_data);
 
     if (temp > 0) {
-        u64 seed = *(u64*)(&p.pos.x);
+        u64 seed = (union f64_u64){.f = p.pos.x}.u;
         temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
         temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
@@ -201,7 +207,7 @@ v2d force_at_particle_euler(f64 t, f64 dt, u64 index, Particle p, BoxedParticles
         temp = temp_func(t, p.pos, temp_data);
 
     if (temp > 0) {
-        u64 seed = *(u64*)(&p.pos.x);
+        u64 seed = (union f64_u64){.f = p.pos.x}.u;
         temp_vector.x = sqrt(temp / dt) * normal_distribution(&seed);
         temp_vector.y = sqrt(temp / dt) * normal_distribution(&seed);
     }
