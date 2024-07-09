@@ -60,8 +60,8 @@ static void render_defect_map(DefectMap defect_map, u64 width, u64 height, RGBA3
         f64 y = i / (f64)height * (defect_map.limit_y.p[1] - defect_map.limit_y.p[0]) + defect_map.limit_y.p[0];
         for (u64 j = 0; j < width; ++j) {
             f64 x = j / (f64)width * (defect_map.limit_x.p[1] - defect_map.limit_x.p[0]) + defect_map.limit_x.p[0];
-            v2d force = defect_map_force_xy(x, y, defect_map);
-            f64 energy = v2d_dot(force, force);//defect_map_potential_xy(x, y, defect_map);
+            //v2d force = defect_map_force_xy(x, y, defect_map);
+            f64 energy = defect_map_potential_xy(x, y, defect_map);
             max_energy = energy > max_energy? energy: max_energy;
             min_energy = energy < min_energy? energy: min_energy;
             energy_aux[i * width + j] = energy;
