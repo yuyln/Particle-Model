@@ -2,10 +2,15 @@
 
 set -xe
 
-LIBS="-lm `pkg-config --static --libs x11 xext` -fopenmp"
+LIBS="-lm `pkg-config --static --libs x11` -fopenmp"
 COMMON_CFLAGS="-O3 -I ./include"
 FILES="`find ./src -maxdepth 1 -type f -name "*.c"` ./src/platform_specific/render_linux_x11.c"
 CC="gcc"
+
+if [ "`pkg-config --libs xext`" > /dev/null ]; then
+    LIBS="$LIBS `pkg-config --static --libs xext`"
+    COMMON_CFLAGS="$COMMON_CFLAGS -DUSE_XEXT"
+fi
 
 if test -f ./libparticle.a; then
     rm ./libparticle.a

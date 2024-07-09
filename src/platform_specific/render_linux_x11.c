@@ -3,11 +3,16 @@
 #include <string.h>
 #define XK_LATIN1
 #include <X11/keysymdef.h>
+
+#ifdef USE_XEXT
 #include <X11/extensions/Xdbe.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "render.h"
+#include "logging.h"
 
 struct render_window {
     Display *display;
@@ -34,21 +39,24 @@ static render_window w[1] = {0};
 void window_init(const char *name, u64 width, u64 height) {
     w->width = width;
     w->height = height;
-    w->buffer = calloc(width * height, sizeof(*w->buffer));
+    w->buffer = calloc(width * height * sizeof(*w->buffer), 1);
+    if (!w->buffer)
+        logging_log(LOG_FATAL, "Could not alloc lol");
     w->should_close = false;
 
     w->display = XOpenDisplay(NULL);
-    if (w->display == NULL) {
-        fprintf(stderr, "[ FATAL ] Could not open the default display\n");
-        exit(1);
-    }
+    if (w->display == NULL)
+        logging_log(LOG_FATAL, "Could not open the default display");
 
-    int major_version_windowurn, minor_version_windowurn;
+#ifdef USE_XEXT
+    s32 major_version_windowurn, minor_version_windowurn;
     w->xdbe = true;
     if(XdbeQueryExtension(w->display, &major_version_windowurn, &minor_version_windowurn)) {
-        printf("[ INFO ] XDBE version %d.%d\n", major_version_windowurn, minor_version_windowurn);
-    } else {
-        fprintf(stderr, "[ FATAL ] XDBE is not supported, using window\n");
+        logging_log(LOG_INFO, "XDBE version %d.%d\n", major_version_windowurn, minor_version_windowurn);
+    } else
+#endif
+    {
+        logging_log(LOG_WARNING, "XDBE is not supported, using default window system");
         w->xdbe = false;
     }
 
@@ -56,20 +64,21 @@ void window_init(const char *name, u64 width, u64 height) {
                        CopyFromParent, CopyFromParent, 0, NULL);
 
     XStoreName(w->display, w->window, name);
-    XSizeHints max_size_hint = {0};
-    max_size_hint.flags = PMinSize | PMaxSize;
-    max_size_hint.min_width = width;
-    max_size_hint.min_height = height;
-    max_size_hint.max_width = width;
-    max_size_hint.max_height = height;
-    XSetWMNormalHints(w->display, w->window, &max_size_hint);
+    XSizeHints max_size_hints = {0};
+    max_size_hints.flags = PMinSize | PMaxSize;
+    max_size_hints.min_width = width;
+    max_size_hints.min_height = height;
+    max_size_hints.max_width = width;
+    max_size_hints.max_height = height;
+    XSetWMNormalHints(w->display, w->window, &max_size_hints);
 
-
-
+#ifdef USE_XEXT
     if (w->xdbe) {
         w->draw = XdbeAllocateBackBufferName(w->display, w->window, 0);
-        printf("[ INFO ] draw ID: %lu\n", w->draw);
-    } else {
+        logging_log(LOG_INFO, "Draw ID: %lu", w->draw);
+    } else
+#endif
+    {
         w->draw = w->window;
     }
 
@@ -105,10 +114,12 @@ static void window_close(void) {
     XFreeGC(w->display, w->gc);
 
     XDestroyImage(w->image);
-    //free(w->buffer); //X frees this pointer
+    //mfree(w->buffer); //X mfrees this pos32er
 
+#ifdef USE_XEXT
     if (w->xdbe)
         XdbeDeallocateBackBufferName(w->display, w->draw);
+#endif
 
     XDestroyWindow(w->display, w->window);
 
@@ -136,44 +147,45 @@ void window_poll(void) {
             }
                 break;
             case ResizeRequest: 
-                printf("Resize\n");
                 break;
             default: {}
         }
     }
 }
 
+
 bool window_key_pressed(char k) {
-    return w->input.key_pressed[(int)k];
+    return w->input.key_pressed[(s32)k];
 }
 
 void window_render(void) {
     XPutImage(w->display, w->draw, w->gc, w->image, 0, 0, 0, 0, w->width, w->height);
 
+#ifdef USE_XEXT
     if (w->xdbe) {
         XdbeSwapInfo swap_info = (XdbeSwapInfo){.swap_window = w->window, .swap_action = 0};
         XdbeSwapBuffers(w->display, &swap_info, 1);
     }
-    //memset(w->buffer, 0, sizeof(*w->buffer) * w->width * w->height);
+#endif
 }
 
-void window_draw_from_bytes(RGBA32 *bytes, int x0, int y0, u64 width, u64 height) {
-    int b_w = width;
+void window_draw_from_bytes(RGBA32 *bytes, s32 x0, s32 y0, u64 width, u64 height) {
+    s32 b_w = width;
     if (x0 < 0) x0 = 0;
     if (y0 < 0) y0 = 0;
-    if ((u64)x0 >= w->width) x0 = w->width - 1;
-    if ((u64)y0 >= w->height) y0 = w->height - 1;
-    if ((u64)x0 + width >= w->width) width = w->width - x0;
-    if ((u64)y0 + height >= w->height) height = w->height - y0;
+    if (x0 >= (s32)w->width) x0 = w->width - 1;
+    if (y0 >= (s32)w->height) y0 = w->height - 1;
+    if (x0 + (s32)width >= (s32)w->width) width = w->width - x0;
+    if (y0 + (s32)height >= (s32)w->height) height = w->height - y0;
 
-    for (int y = y0; y < y0 + (s64)height; ++y)
+    for (s32 y = y0; y < y0 + (s64)height; ++y)
         memmove(&w->buffer[y * w->width + x0], &bytes[(y - y0) * b_w], width * sizeof(*bytes));
 }
 
-int window_width(void) {
+s32 window_width(void) {
     return w->width;
 }
 
-int window_height(void) {
+s32 window_height(void) {
     return w->height;
 }

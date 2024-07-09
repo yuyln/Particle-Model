@@ -17,8 +17,8 @@ void window_poll(void);
 //void window_close(void);
 bool window_key_pressed(char c);
 void window_render(void);
-void window_draw_from_bytes(RGBA32 *bytes, int x, int y, u64 width, u64 height);
-int window_width(void);
-int window_height(void);
+void window_draw_from_bytes(RGBA32 *bytes, s32 x, s32 y, u64 width, u64 height);
+s32 window_width(void);
+s32 window_height(void);
 
 #endif
