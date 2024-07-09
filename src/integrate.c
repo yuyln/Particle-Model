@@ -85,6 +85,12 @@ void integrate_context_deinit(IntegrateContext *ctx) {
 void integrate_context_step(IntegrateContext *ctx) {
     for (u64 i = 0; i < ctx->ps0.len; ++i) {
         v2d force = force_at_particle_rk4(ctx->time, ctx->params.dt, i, ctx->bp.ps.items[i], ctx->bp, ctx->potential, ctx->defects, ctx->params.drive_function, ctx->params.drive_data, ctx->params.temperature_function, ctx->params.temperature_data);
+
+        //if (i == 0) {
+        //    v2d df = defect_map_force_xy(ctx->bp.ps.items[i].pos.x, ctx->bp.ps.items[i].pos.y, ctx->defects);
+        //    logging_log(LOG_INFO, "dfx = %.e dfy = %.e", df.x, df.y);
+        //}
+
         ctx->ps0.items[i].pos = v2d_add(ctx->bp.ps.items[i].pos, force);
         ctx->ps0.items[i].pos = boundary_condition(ctx->ps0.items[i].pos, ctx->defects.limit_x, ctx->defects.limit_y);
         ctx->avg_vel[i] = v2d_add(ctx->avg_vel[i], v2d_fac(force, 1.0 / (ctx->params.dt * ctx->ps0.len)));

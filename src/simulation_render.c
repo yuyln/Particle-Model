@@ -17,8 +17,8 @@ static void render_particles(Particles ps, DefectMap defect_map, u64 width, u64 
         u64 iy = (pos.y - defect_map.limit_y.p[0]) / (defect_map.limit_y.p[1] - defect_map.limit_y.p[0]) * height;
         for (s64 dy = -5; dy < 5; ++dy) {
             for (s64 dx = -5; dx < 5; ++dx) {
-                u64 display_x = ((((s64)ix + dx) % width) + width) % width;
-                u64 display_y = ((((s64)iy + dy) % height) + height) % height;
+                u64 display_x = ((((s64)ix + dx) % (s64)width) + (s64)width) % (s64)width;
+                u64 display_y = ((((s64)iy + dy) % (s64)height) + (s64)height) % (s64)height;
                 display_y = height - 1 - display_y;
                 if (dx * dx + dy * dy < 25)
                     display[display_y * width + display_x] = (RGBA32){.a = 255};
@@ -44,10 +44,10 @@ static void render_energy(BoxedParticles bp, Table particle_potential, DefectMap
     for (u64 I = 0; I < width * height; ++I) {
         u64 ix = I % width;
         u64 iy = (I - ix) / width;
-        iy = height - 1 - iy;
         f64 energy = energy_aux[iy * width + ix];
 
         energy = (energy - min_e) / (max_e - min_e);
+        iy = height - 1 - iy;
         display[iy * width + ix] = (RGBA32){.r = energy * 255, .g = energy * 255, .b = energy * 255, .a = 255};
 
     }
@@ -60,7 +60,8 @@ static void render_defect_map(DefectMap defect_map, u64 width, u64 height, RGBA3
         f64 y = i / (f64)height * (defect_map.limit_y.p[1] - defect_map.limit_y.p[0]) + defect_map.limit_y.p[0];
         for (u64 j = 0; j < width; ++j) {
             f64 x = j / (f64)width * (defect_map.limit_x.p[1] - defect_map.limit_x.p[0]) + defect_map.limit_x.p[0];
-            f64 energy = defect_map_potential_xy(x, y, defect_map);
+            v2d force = defect_map_force_xy(x, y, defect_map);
+            f64 energy = v2d_dot(force, force);//defect_map_potential_xy(x, y, defect_map);
             max_energy = energy > max_energy? energy: max_energy;
             min_energy = energy < min_energy? energy: min_energy;
             energy_aux[i * width + j] = energy;
@@ -71,6 +72,7 @@ static void render_defect_map(DefectMap defect_map, u64 width, u64 height, RGBA3
         for (u64 j = 0; j < width; ++j) {
             f64 energy = energy_aux[i * width + j];
             energy = (energy - min_energy) / (max_energy - min_energy);
+            i = height - 1 - i;
             display[i * width + j] = (RGBA32){.r = (1.0 - energy) * 255, .g = 255, .b = (1.0 - energy) * 255, .a = 255};
         }
     }

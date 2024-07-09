@@ -61,21 +61,21 @@ void defect_map_calculate_coefs(DefectMap *it) {
             f64 dfdy[4] = {0};    //(0, 0), (1, 0), (0, 1), (1, 1)
             f64 d2fdxdy[4] = {0}; //(0, 0), (1, 0), (0, 1), (1, 1)
 
-            s32 right = col + 1;
-            s32 left =  col - 1;
-            s32 righter = col + 2;
+            s64 right = col + 1;
+            s64 left =  col - 1;
+            s64 righter = col + 2;
 
-            s32 up =    row + 1;
-            s32 down =  row - 1;
-            s32 upper = row + 2;
+            s64 up =    row + 1;
+            s64 down =  row - 1;
+            s64 upper = row + 2;
             
-            left = ((left % it->cols) + it->cols) % it->cols;
-            right = ((right % it->cols) + it->cols) % it->cols;
-            righter = ((righter % it->cols) + it->cols) % it->cols;
+            left = ((left % (s64)it->cols) + (s64)it->cols) % (s64)it->cols;
+            right = ((right % (s64)it->cols) + (s64)it->cols) % (s64)it->cols;
+            righter = ((righter % (s64)it->cols) + (s64)it->cols) % (s64)it->cols;
 
-            up = ((up % it->rows) + it->rows) % it->rows;
-            down = ((down % it->rows) + it->rows) % it->rows;
-            upper = ((upper % it->rows) + it->rows) % it->rows;
+            up = ((up % (s64)it->rows) + (s64)it->rows) % (s64)it->rows;
+            down = ((down % (s64)it->rows) + (s64)it->rows) % (s64)it->rows;
+            upper = ((upper % (s64)it->rows) + (s64)it->rows) % (s64)it->rows;
 
 
             f[0] = it->map[row * it->cols + col];
