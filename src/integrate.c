@@ -14,7 +14,7 @@ IntegrateParams integrate_params_init() {
     ret.total_time = 3e6 * ret.dt;
     ret.path_for_information = "integrate_info.csv";
     ret.interval_for_information = 1000;
-    ret.max_derivative = 1.0e-4;
+    ret.max_value = 1.0e-4;
     return ret;
 }
 
@@ -25,7 +25,7 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
     for (u64 i = 0; i < ps.len; ++i)
         da_append(&ctx.ps0, ps.items[i]);
 
-    f64 cut = table_get_cut(particle_potential, params.max_derivative);
+    f64 cut = table_get_cut(particle_potential, params.max_value);
 
     logging_log(LOG_INFO, "Particle potential cut found: %.15e. Potential(cut) = %.15e | Derivative(cut) = %.15e", cut, table_get_value(particle_potential, cut), table_get_derivative(particle_potential, cut));
 

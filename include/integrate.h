@@ -13,7 +13,7 @@ typedef struct {
     f64 total_time;
     u64 interval_for_information;
     const char *path_for_information;
-    f64 max_derivative;
+    f64 max_value;
 
     v2d(*drive_function)(f64, v2d, void *);
     f64(*temperature_function)(f64, v2d, void *);

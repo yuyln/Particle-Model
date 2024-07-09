@@ -52,9 +52,9 @@ void table_deinit(Table *table) {
     memset(table, 0, sizeof(*table));
 }
 
-f64 table_get_cut(Table table, f64 max_derivative) {
+f64 table_get_cut(Table table, f64 max_value) {
     f64 cut = 0;
-    while (fabs(table_get_derivative(table, cut)) > max_derivative)
+    while (fabs(table_get_value(table, cut)) > max_value)
         cut += table.delta_value / 2.0;
     return cut;
 }
