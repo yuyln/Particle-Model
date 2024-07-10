@@ -3,8 +3,10 @@
 #include "primitive_types.h"
 #include "v2d.h"
 
+#include <immintrin.h>
+
 typedef struct {
-    f64 a[16];
+    __m256d b[4];
 } MapCoeff;
 
 typedef struct {

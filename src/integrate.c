@@ -75,6 +75,7 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
 }
 
 void integrate_context_deinit(IntegrateContext *ctx) {
+    boxed_particles_deinit(&ctx->bp);
     free(ctx->ps0.items);
     free(ctx->avg_vel);
     free(ctx->inst_vel);

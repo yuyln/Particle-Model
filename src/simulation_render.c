@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <float.h>
+#include <omp.h>
 
 u64 steps_per_frame = 10;
 
@@ -53,25 +54,10 @@ static void render_energy(BoxedParticles bp, Table particle_potential, DefectMap
     }
 }
 
-static void render_defect_map(DefectMap defect_map, u64 width, u64 height, RGBA32 *display, f64 *energy_aux) {
-    f64 min_energy = FLT_MAX;
-    f64 max_energy = -FLT_MAX;
-    for (u64 i = 0; i < height; ++i) {
-        f64 y = i / (f64)height * (defect_map.limit_y.p[1] - defect_map.limit_y.p[0]) + defect_map.limit_y.p[0];
-        for (u64 j = 0; j < width; ++j) {
-            f64 x = j / (f64)width * (defect_map.limit_x.p[1] - defect_map.limit_x.p[0]) + defect_map.limit_x.p[0];
-            //v2d force = defect_map_force_xy(x, y, defect_map);
-            f64 energy = defect_map_potential_xy(x, y, defect_map);
-            max_energy = energy > max_energy? energy: max_energy;
-            min_energy = energy < min_energy? energy: min_energy;
-            energy_aux[i * width + j] = energy;
-        }
-    }
-
+static void render_defect_map(DefectMap defect_map, u64 width, u64 height, RGBA32 *display, f64 max_energy, f64 min_energy, f64 *map) {
     for (u64 i = 0; i < height; ++i) {
         for (u64 j = 0; j < width; ++j) {
-            f64 energy = energy_aux[i * width + j];
-            energy = (energy - min_energy) / (max_energy - min_energy);
+            f64 energy = map[i * width + j];
             i = height - 1 - i;
             display[i * width + j] = (RGBA32){.r = (1.0 - energy) * 255, .g = 255, .b = (1.0 - energy) * 255, .a = 255};
         }
@@ -84,6 +70,26 @@ void simulation_render_integrate(Particles ps, Table particle_potential, DefectM
     RGBA32 *display = calloc(sizeof(*display) * width * height, 1);
     if (!display)
         logging_log(LOG_FATAL, "%s:%d Could not allocate memory. Buy more RAM", __FILE__, __LINE__);
+
+    f64 max_defect_map = -FLT_MAX;
+    f64 min_defect_map = FLT_MAX;
+
+    f64 *defect_map_aux = calloc(sizeof(*defect_map_aux) * width * height, 1);
+    for (u64 i = 0; i < height; ++i) {
+        f64 y = i / (f64)height * (defect_map.limit_y.p[1] - defect_map.limit_y.p[0]) + defect_map.limit_y.p[0];
+        for (u64 j = 0; j < width; ++j) {
+            f64 x = j / (f64)width * (defect_map.limit_x.p[1] - defect_map.limit_x.p[0]) + defect_map.limit_x.p[0];
+            //v2d force = defect_map_force_xy(x, y, defect_map);
+            f64 energy = defect_map_potential_xy(x, y, defect_map);
+            max_defect_map = energy > max_defect_map? energy: max_defect_map;
+            min_defect_map = energy < min_defect_map? energy: min_defect_map;
+            defect_map_aux[i * width + j] = energy;
+        }
+    }
+
+    for (u64 i = 0; i < height; ++i)
+        for (u64 j = 0; j < width; ++j)
+            defect_map_aux[i * width + j] = (defect_map_aux[i * width + j] - min_defect_map) / (max_defect_map - min_defect_map);
 
     byte state = 'p';
     f64 *energy_aux = calloc(sizeof(*energy_aux) * width * height, 1);
@@ -103,7 +109,7 @@ void simulation_render_integrate(Particles ps, Table particle_potential, DefectM
                 render_energy(ctx.bp, particle_potential, defect_map, width, height, display, energy_aux);
                 break;
             case 'd':
-                render_defect_map(defect_map, width, height, display, energy_aux);
+                render_defect_map(defect_map, width, height, display, max_defect_map, min_defect_map, defect_map_aux);
                 render_particles(ps, defect_map, width, height, display);
                 break;
         }
@@ -123,5 +129,6 @@ void simulation_render_integrate(Particles ps, Table particle_potential, DefectM
     integrate_context_deinit(&ctx);
     profiler_print_measures(stdout);
     free(energy_aux);
+    free(defect_map_aux);
 }
 

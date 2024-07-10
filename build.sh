@@ -3,7 +3,7 @@
 set -xe
 
 LIBS="-lm `pkg-config --static --libs x11` -fopenmp"
-COMMON_CFLAGS="-O3 -I ./include"
+COMMON_CFLAGS="-O3 -I ./include -mavx2"
 FILES="`find ./src -maxdepth 1 -type f -name "*.c"` ./src/platform_specific/render_linux_x11.c"
 CC="gcc"
 

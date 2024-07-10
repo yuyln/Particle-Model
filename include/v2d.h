@@ -1,10 +1,12 @@
 #ifndef __V2D_H
 #define __V2D_H
 #include "primitive_types.h"
+#include <immintrin.h>
 
 typedef union {
     struct {f64 x, y;};
     f64 p[2];
+    __m128d v;
 } v2d;
 
 v2d v2d_c(f64 x, f64 y);
