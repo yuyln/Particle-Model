@@ -3,7 +3,7 @@
 set -xe
 
 LIBS="-lm `pkg-config --static --libs x11` -fopenmp"
-COMMON_CFLAGS="-O3 -I ./include -mavx2 -msse2"
+COMMON_CFLAGS="-Ofast -I ./include -mavx2 -msse2"
 FILES="`find ./src -maxdepth 1 -type f -name "*.c"` ./src/platform_specific/render_linux_x11.c"
 CC="gcc"
 
@@ -33,7 +33,7 @@ if [ "$1" = "install" ]; then
     cp -r ./include/* ~/.local/lib/particle/include
 else
     set -xe
-    CFLAGS="$COMMON_CFLAGS -Wall -Wextra -pedantic -ggdb -DDEBUG"
+    CFLAGS="$COMMON_CFLAGS -Wall -Wextra -pedantic -ggdb -g3"
 
     $CC $CFLAGS -c $FILES $LIBS
 

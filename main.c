@@ -67,7 +67,7 @@ int main(void) {
     iparams.temperature_function = temperature;
     iparams.interval_for_information = 0;
     iparams.dt = 0.01;
-    iparams.total_time = iparams.dt * 3e5;
+    iparams.total_time = iparams.dt * 3e4;
 
     FILE *data_per_current = fopen("data.dat", "w");
     if (!data_per_current)
@@ -98,7 +98,7 @@ int main(void) {
         //v2d avg_vel = integrate(ps, table, defect_map, iparams);
         //if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
         //    logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
-        simulation_render_integrate(ps, table, defect_map, iparams, 1000, 1000);
+        integrate(ps, table, defect_map, iparams);
     fclose(data_per_current);
     free(ps.items);
     defect_map_deinit(&defect_map);

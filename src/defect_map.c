@@ -362,7 +362,7 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
         //2: gets (result[2] + result[3], dummy[2] + dummy[3])
         //3: sums per item: (result[0..3], dummy[0..3]
         //4: returns the first component result[0..3]
-        ret.x = _mm_add_pd(_mm256_extractf128_pd(sum, 0), _mm256_extractf128_pd(sum, 1))[0] / map.dx;
+        ret.x = -_mm_add_pd(_mm256_extractf128_pd(sum, 0), _mm256_extractf128_pd(sum, 1))[0] / map.dx;
     }
 
     // d/dy
@@ -388,10 +388,10 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
         //2: gets (result[2] + result[3], dummy[2] + dummy[3])
         //3: sums per item: (result[0..3], dummy[0..3]
         //4: returns the first component result[0..3]
-        ret.y = _mm_add_pd(_mm256_extractf128_pd(sum, 0), _mm256_extractf128_pd(sum, 1))[0] / map.dy;
+        ret.y = -_mm_add_pd(_mm256_extractf128_pd(sum, 0), _mm256_extractf128_pd(sum, 1))[0] / map.dy;
     }
 
-     return v2d_fac(ret, -1);
+     return ret;
 }
 
 void defect_map_deinit(DefectMap *map) {

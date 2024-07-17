@@ -49,7 +49,7 @@ v2d boundary_condition(v2d pos, v2d limit_x, v2d limit_y) {
     return pos;
 }
 
-/*bool read_entire_file(String path, String *str) {
+bool read_entire_file(String path, String *str) {
     bool ret = true;
     FILE *f = fopen(str_as_cstr(&path), "r");
     if (!f) {
@@ -66,7 +66,7 @@ v2d boundary_condition(v2d pos, v2d limit_x, v2d limit_y) {
     }
 
     return ret;
-}*/
+}
 
 f64 lerp(f64 a, f64 b, f64 t) {
     return (b - a) * t + a;
