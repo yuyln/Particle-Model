@@ -300,7 +300,7 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
 
     s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
     s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
-    MapCoeff coefs = map.coefs[0];
+    MapCoeff coefs = map.coefs[idy * map.cols + idx];
 
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
