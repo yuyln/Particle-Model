@@ -16,7 +16,10 @@ DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun
     if (!ret.map)
         logging_log(LOG_FATAL, "Could not allocate %"PRIu64"x%"PRIu64" defect map values", rows, cols);
 
-    ret.coefs = calloc(rows * cols * sizeof(*ret.coefs), 1);
+    u64 miss_to_align = 32 - (rows * cols * sizeof(*ret.coefs)) % 32;
+    ret.coefs = aligned_alloc(32, rows * cols * sizeof(*ret.coefs) + miss_to_align);
+    // FUCK ME: this shit needs to be 32 aligned. For some reason, using the old String everywhere (before changing to StringBuilder),
+    // hid this alignment requirement. Some stack shit maybe?
     if (!ret.coefs)
         logging_log(LOG_FATAL, "Could not allocate %"PRIu64"x%"PRIu64" defect map coefs", rows, cols);
 
@@ -297,7 +300,7 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
 
     s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
     s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
-    MapCoeff coefs = map.coefs[idy * map.cols + idx];
+    MapCoeff coefs = map.coefs[0];
 
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
