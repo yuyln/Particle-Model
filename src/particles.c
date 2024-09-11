@@ -16,45 +16,45 @@ bool particles_dump_file(FILE *f, Particles ps) {
     return true;
 }
 
-bool particles_dump_path(String path, Particles ps) {
+bool particles_dump_path(const char *path, Particles ps) {
     bool ret = true;
-    FILE *f = fopen(str_as_cstr(&path), "w");
+    FILE *f = fopen(path, "w");
     if (!f) {
-        logging_log(LOG_ERROR, "Could not open file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not open file \"%s\": %s", path, strerror(errno));
         return false;
     }
 
     u64 intended = sizeof(*ps.items) * ps.len;
     u64 s = fwrite(ps.items, 1, intended, f);
     if (s != intended) {
-        logging_log(LOG_ERROR, "Could not dump Particles information (expected to dump %"PRIu64" bytes, but dumped %"PRIu64" bytes) in file "S_FMT": %s", intended, s, S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not dump Particles information (expected to dump %"PRIu64" bytes, but dumped %"PRIu64" bytes) in file \"%s\": %s", intended, s, path, strerror(errno));
         ret = false;
     }
 
     if (fclose(f) != 0) {
-        logging_log(LOG_ERROR, "Could not close file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not close file \"%s\": %s", path, strerror(errno));
         ret = false;
     }
     return ret;
 }
 
-bool particles_append_path(String path, Particles ps) {
+bool particles_append_path(const char *path, Particles ps) {
     bool ret = true;
-    FILE *f = fopen(str_as_cstr(&path), "a");
+    FILE *f = fopen(path, "a");
     if (!f) {
-        logging_log(LOG_ERROR, "Could not open file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not open file \"%s\": %s", path, strerror(errno));
         return false;
     }
 
     u64 intended = sizeof(*ps.items) * ps.len;
     u64 s = fwrite(ps.items, 1, intended, f);
     if (s != intended) {
-        logging_log(LOG_ERROR, "Could not dump Particles information (expected to dump %"PRIu64" bytes, but dumped %"PRIu64" bytes) in file "S_FMT": %s", intended, s, S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not dump Particles information (expected to dump %"PRIu64" bytes, but dumped %"PRIu64" bytes) in file \"%s\": %s", intended, s, path, strerror(errno));
         ret = false;
     }
 
     if (fclose(f) != 0) {
-        logging_log(LOG_ERROR, "Could not close file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not close file \"%s\": %s", path, strerror(errno));
         ret = false;
     }
     return ret;

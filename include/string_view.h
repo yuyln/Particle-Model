@@ -1,22 +1,20 @@
-#ifndef __String_H
-#define __String_H
+#ifndef __STRINGBUILDER_H
+#define __STRINGBUILDER_H
 #include "primitive_types.h"
 
 #define S_FMT "%.*s"
 #define S_ARG(s) (s32)((s).len), (s).items
-#define STR_NULL ((String){0})
 
 typedef struct {
     char *items;
     u64 len;
     u64 cap;
-} String;
+} StringBuilder;
 
-void str_cat_str(String *s, String s2);
-void str_cat_cstr(String *s, const char *s2);
-void str_cat_fmt(String *s, const char *fmt, ...);
-void str_free(String *s);
-String str_from_cstr(const char *s);
-String str_from_fmt(const char *fmt, ...);
-const char *str_as_cstr(String *s);
+void sb_cat_sb(StringBuilder *s, StringBuilder s2);
+void sb_cat_cstr(StringBuilder *s, const char *s2);
+void sb_cat_fmt(StringBuilder *s, const char *fmt, ...);
+void sb_free(StringBuilder *s);
+const char *sb_as_cstr(StringBuilder *s);
+
 #endif

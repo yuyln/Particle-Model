@@ -12,9 +12,9 @@ u64 vfmt_get_size(const char *fmt, va_list args) {
     return vsnprintf(NULL, 0, fmt, args);
 }
 
-void str_cat_str(String *s, String s2) {
+void sb_cat_sb(StringBuilder *s, StringBuilder s2) {
     if (!s2.items) {
-        logging_log(LOG_WARNING, "String argument passed to concatenate (s2) is NULL. Trying to concatenate %.*s.", (int)s->len, s->items);
+        logging_log(LOG_WARNING, "StringBuilder argument passed to concatenate (s2) is NULL. Trying to concatenate %.*s.", (int)s->len, s->items);
         return;
     }
 
@@ -31,7 +31,7 @@ void str_cat_str(String *s, String s2) {
     s->cap = s->len;
 }
 
-void str_cat_cstr(String *s, const char *s2) {
+void sb_cat_cstr(StringBuilder *s, const char *s2) {
     u64 old_len = s->len;
     u64 s2_len = strlen(s2);
     s->len += s2_len;
@@ -44,13 +44,13 @@ void str_cat_cstr(String *s, const char *s2) {
     s->cap = s->len;
 }
 
-void str_cat_fmt(String *s, const char *fmt, ...) {
+void sb_cat_fmt(StringBuilder *s, const char *fmt, ...) {
     char *tmp = NULL;
 
     va_list arg_list;
     va_start(arg_list, fmt);
     if (!fmt) {
-        logging_log(LOG_WARNING, "Format String provided is NULL");
+        logging_log(LOG_WARNING, "Format StringBuilder provided is NULL");
         goto err;
     }
 
@@ -82,50 +82,11 @@ err:
     free(tmp);
 }
 
-void str_free(String *s) {
+void sb_free(StringBuilder *s) {
     free(s->items);
     memset(s, 0, sizeof(*s));
 }
 
-const char *str_as_cstr(String *s) {
+const char *sb_as_cstr(StringBuilder *s) {
     return s->items;
-}
-
-String str_from_cstr(const char *s) {
-    String ret = STR_NULL;
-    str_cat_cstr(&ret, s);
-    return ret;
-}
-
-String str_from_fmt(const char *fmt, ...) {
-    String ret = STR_NULL;
-    va_list arg_list;
-    va_start(arg_list, fmt);
-    if (!fmt) {
-        logging_log(LOG_WARNING, "Format String provided is NULL");
-        return (String){0};
-    }
-
-    u64 tmp_len = vsnprintf(NULL, 0, fmt, arg_list) + 1;
-    va_end(arg_list);
-
-    char *tmp = calloc(tmp_len, 1);
-    if (!tmp)
-        logging_log(LOG_FATAL, "Could not alloc %"PRIu64" bytes for tmp: %s", tmp_len, strerror(errno));
-
-    va_start(arg_list, fmt);
-    vsnprintf(tmp, tmp_len, fmt, arg_list);
-    va_end(arg_list);
-
-    tmp_len = strlen(tmp);
-    ret.len = tmp_len;
-    ret.items = calloc(ret.len + 1, 1);
-    if (!ret.items)
-        logging_log(LOG_FATAL, "Could not alloc pointer for str [%"PRIu64" bytes], returning null String: %s", (int)ret.len, strerror(errno));
-    else
-        memmove(ret.items, tmp, tmp_len + 1);
-
-    free(tmp);
-    ret.cap = ret.len;
-    return ret;
 }

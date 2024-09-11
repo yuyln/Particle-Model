@@ -22,10 +22,10 @@ typedef struct {
     u64 cap;
 } Particles;
 
-Particles particles_from_file(String path);
+Particles particles_from_file(const char *path);
 bool particles_dump_file(FILE *f, Particles ps);
-bool particles_dump_path(String path, Particles ps);
-bool particles_append_path(String path, Particles ps);
+bool particles_dump_path(const char *path, Particles ps);
+bool particles_append_path(const char *path, Particles ps);
 void particles_append_particle(Particles *ps, Particle p);
 f64 particle_energy_point(Particle p, v2d point, const Table potential);
 v2d particle_force_point(Particle p, v2d point, const Table force);

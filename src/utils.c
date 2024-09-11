@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <stdarg.h>
 
 u64 xorshift64_u64(Xorshift64State *state) {
 	u64 x = *state;
@@ -49,19 +50,21 @@ v2d boundary_condition(v2d pos, v2d limit_x, v2d limit_y) {
     return pos;
 }
 
-bool read_entire_file(String path, String *str) {
+bool read_entire_file(const char *path, char **str_) {
     bool ret = true;
-    FILE *f = fopen(str_as_cstr(&path), "r");
+    FILE *f = fopen(path, "r");
     if (!f) {
-        logging_log(LOG_ERROR, "Could not open file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not open file \"%s\": %s", path, strerror(errno));
         return false;
     }
     char c;
+    StringBuilder str = {0};
     while ((c = fgetc(f)) != EOF)
-        da_append(str, c);
+        da_append(&str, c);
+    *str_ = (char*)sb_as_cstr(&str);
 
     if (fclose(f) != 0) {
-        logging_log(LOG_ERROR, "Could not close file "S_FMT": %s", S_ARG(path), strerror(errno));
+        logging_log(LOG_ERROR, "Could not close file \"%s\": %s", path, strerror(errno));
         ret = false;
     }
 
@@ -70,4 +73,30 @@ bool read_entire_file(String path, String *str) {
 
 f64 lerp(f64 a, f64 b, f64 t) {
     return (b - a) * t + a;
+}
+
+char *str_fmt_tmp(const char *fmt, ...) {
+    static char strs[MAX_STRS][MAX_STR_LEN] = {0};
+    static uint64_t idx = 0;
+    uint64_t ret_idx = idx;
+
+    va_list arg_list;
+    va_start(arg_list, fmt);
+    if (!fmt) {
+        logging_log(LOG_WARNING, "Format string provided is NULL");
+        goto end;
+    }
+
+    if (vsnprintf(strs[idx], MAX_STR_LEN, fmt, arg_list) > MAX_STR_LEN)
+        logging_log(LOG_WARNING, "String written with len greater than MAX_STR_LEN");
+
+    va_end(arg_list);
+    idx += 1;
+    if (idx >= MAX_STR_LEN) {
+        idx = 0;
+        logging_log(LOG_WARNING, "Surpassed MAX_STRS limit. Strings are going to be overwritten, starting with %s", strs[0]);
+    }
+end:
+    return strs[ret_idx];
+
 }
