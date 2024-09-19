@@ -24,7 +24,9 @@ DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun
     if (!ret.coefs)
         logging_log(LOG_FATAL, "Could not allocate %"PRIu64"x%"PRIu64" defect map coefs", rows, cols);
 
-    for (u64 row = 0; row < rows; ++row) {
+    u64 row = 0; //MSVC...........
+#pragma omp parallel for
+    for (row = 0; row < rows; ++row) {
         f64 y = row / (f64)rows;
         y = lerp(limit_y.p[0], limit_y.p[1], y);
         for (u64 col = 0; col < cols; ++col) {
@@ -39,7 +41,9 @@ DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun
 }
 
 void defect_map_calculate_coefs(DefectMap *it) {
-    for (u64 row = 0; row < it->rows; ++row) {
+    u64 row = 0; //MSVC......
+#pragma omp parallel for
+    for (row = 0; row < it->rows; ++row) {
         for (u64 col = 0; col < it->cols; ++col) {
             s64 right = col + 1;
             s64 left =  col - 1;
