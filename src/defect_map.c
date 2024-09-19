@@ -5,6 +5,7 @@
 
 #include <immintrin.h>
 #include <stdlib.h>
+INCEPTION("I timed bilinear with and without AVX. No big difference. Gonna keep AVX just because");
 
 DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun)(f64, f64, void*), void *user_data) {
     f64 dy = (limit_y.p[1] - limit_y.p[0]) / rows;
