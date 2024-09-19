@@ -60,7 +60,7 @@ int main(void) {
     }
 
     Table table = table_init(particle_potential, EPS, 10, 0.001, NULL);
-    DefectMap defect_map = defect_map_init(2000, 2000, sx, sy, moire_lattice, NULL);
+    DefectMap defect_map = defect_map_init(1000, 1000, sx, sy, moire_lattice, NULL);
 
     IntegrateParams iparams = integrate_params_init();
     iparams.drive_function = drive;
@@ -98,7 +98,7 @@ int main(void) {
         //v2d avg_vel = integrate(ps, table, defect_map, iparams);
         //if (fprintf(data_per_current, "%.15e,%.15e,%.15e,%.15e,%.15e\n", current, avg_vel.x, avg_vel.y, avg_vel.y / avg_vel.x, atan2(avg_vel.y, avg_vel.x) * 180.0 / M_PI) < 0)
         //    logging_log(LOG_FATAL, "Could not write on `data_per_current` file");
-        integrate(ps, table, defect_map, iparams);
+        simulation_render_integrate(ps, table, defect_map, iparams, 1000, 1000);
     fclose(data_per_current);
     free(ps.items);
     defect_map_deinit(&defect_map);

@@ -6,7 +6,11 @@
 #include <immintrin.h>
 
 typedef struct {
+#ifdef BICUBIC_MAP
     __m256d b[4];
+#else
+    __m256d b;
+#endif
 } MapCoeff;
 
 typedef struct {
