@@ -61,27 +61,6 @@ void defect_map_calculate_coefs(DefectMap *it) {
             down = ((down % (s64)it->rows) + (s64)it->rows) % (s64)it->rows;
             upper = ((upper % (s64)it->rows) + (s64)it->rows) % (s64)it->rows;
 
-#ifdef BICUBIC_MAP
-            //https://en.wikipedia.org/wiki/Bicubic_s32erpolation
-            __m256d A[64] = {
-                { 1,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
-                { 0,  0,  0,  0}, { 1,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
-                {-3,  3,  0,  0}, {-2, -1,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
-                { 2, -2,  0,  0}, { 1,  1,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
-                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 1,  0,  0,  0}, { 0,  0,  0,  0},
-                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 1,  0,  0,  0},
-                { 0,  0,  0,  0}, { 0,  0,  0,  0}, {-3,  3,  0,  0}, {-2, -1,  0,  0},
-                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 2, -2,  0,  0}, { 1,  1,  0,  0},
-                {-3,  0,  3,  0}, { 0,  0,  0,  0}, {-2,  0, -1,  0}, { 0,  0,  0,  0},
-                { 0,  0,  0,  0}, {-3,  0,  3,  0}, { 0,  0,  0,  0}, {-2,  0, -1,  0},
-                { 9, -9, -9,  9}, { 6,  3, -6, -3}, { 6, -6,  3, -3}, { 4,  2,  2,  1},
-                {-6,  6,  6, -6}, {-3, -3,  3,  3}, {-4,  4, -2,  2}, {-2, -2, -1, -1},
-                { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0}, { 0,  0,  0,  0},
-                { 0,  0,  0,  0}, { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0},
-                {-6,  6,  6, -6}, {-4, -2,  4,  2}, {-3,  3, -3,  3}, {-2, -1, -2, -1},
-                { 4, -4, -4,  4}, { 2,  2, -2, -2}, { 2, -2,  2, -2}, { 1,  1,  1,  1} 
-            };
-
             __m256d f = {0};       //(0, 0), (1, 0), (0, 1), (1, 1)
             __m256d dfdx = {0};    //(0, 0), (1, 0), (0, 1), (1, 1)
             __m256d dfdy = {0};    //(0, 0), (1, 0), (0, 1), (1, 1)
@@ -106,6 +85,27 @@ void defect_map_calculate_coefs(DefectMap *it) {
             dfdx[3] = (it->map[up * it->cols + righter] - it->map[up * it->cols + col]) / 2.0;
             dfdy[3] = (it->map[upper * it->cols + right] - it->map[row * it->cols + right]) / 2.0;
             d2fdxdy[3] = (it->map[upper * it->cols + righter] - it->map[row * it->cols + righter] - it->map[upper * it->cols + col] + it->map[row * it->cols + col]) / 4.0;
+
+#if defined(BICUBIC_MAP)
+            //https://en.wikipedia.org/wiki/Bicubic_s32erpolation
+            __m256d A[64] = {
+                { 1,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
+                { 0,  0,  0,  0}, { 1,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
+                {-3,  3,  0,  0}, {-2, -1,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
+                { 2, -2,  0,  0}, { 1,  1,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0},
+                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 1,  0,  0,  0}, { 0,  0,  0,  0},
+                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 1,  0,  0,  0},
+                { 0,  0,  0,  0}, { 0,  0,  0,  0}, {-3,  3,  0,  0}, {-2, -1,  0,  0},
+                { 0,  0,  0,  0}, { 0,  0,  0,  0}, { 2, -2,  0,  0}, { 1,  1,  0,  0},
+                {-3,  0,  3,  0}, { 0,  0,  0,  0}, {-2,  0, -1,  0}, { 0,  0,  0,  0},
+                { 0,  0,  0,  0}, {-3,  0,  3,  0}, { 0,  0,  0,  0}, {-2,  0, -1,  0},
+                { 9, -9, -9,  9}, { 6,  3, -6, -3}, { 6, -6,  3, -3}, { 4,  2,  2,  1},
+                {-6,  6,  6, -6}, {-3, -3,  3,  3}, {-4,  4, -2,  2}, {-2, -2, -1, -1},
+                { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0}, { 0,  0,  0,  0},
+                { 0,  0,  0,  0}, { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0},
+                {-6,  6,  6, -6}, {-4, -2,  4,  2}, {-3,  3, -3,  3}, {-2, -1, -2, -1},
+                { 4, -4, -4,  4}, { 2,  2, -2, -2}, { 2, -2,  2, -2}, { 1,  1,  1,  1} 
+            };
 
             __m256d X[4] = {{f[0], f[1], f[2], f[3]},
                 {dfdx[0], dfdx[1], dfdx[2], dfdx[3]},
@@ -139,6 +139,16 @@ void defect_map_calculate_coefs(DefectMap *it) {
                 }
                 ((f64*)(it->coefs[row * it->cols + col].b))[i] = acc;
             }
+#elif defined(BIQUADRATIC_MAP)
+            it->coefs[row * it->cols + col].b[0][0] = f[0];
+            it->coefs[row * it->cols + col].b[0][1] = dfdy[0];
+            it->coefs[row * it->cols + col].b[0][2] = f[2] - dfdy[0] - f[0];
+            it->coefs[row * it->cols + col].b[1][0] = dfdx[0];
+            it->coefs[row * it->cols + col].b[1][1] = d2fdxdy[0];
+            it->coefs[row * it->cols + col].b[1][2] = -dfdx[3] + 2.0 * f[3] - 2.0 * f[2] - d2fdxdy[0] - dfdx[0];
+            it->coefs[row * it->cols + col].b[2][0] = f[1] - dfdx[0] - f[0];
+            it->coefs[row * it->cols + col].b[2][1] = -dfdy[3] + 2.0 * f[3] - 2.0 * f[1] - dfdy[0] - d2fdxdy[0];
+            it->coefs[row * it->cols + col].b[2][2] = dfdy[3] + dfdx[3] - 3.0 * f[3] + f[1] + f[2] + dfdy[0] + d2fdxdy[0] + dfdx[0] + f[0];
 #else
             //https://en.wikipedia.org/wiki/Bilinear_interpolation
             it->coefs[row * it->cols + col].b[0] = it->map[row * it->cols + col];
@@ -161,7 +171,7 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
 
-#ifdef BICUBIC_MAP
+#if defined(BICUBIC_MAP)
     __m256d ys[4] = {{1, 1, 1, 1},
                      {y, y, y, y},
                      {y * y, y * y, y * y, y * y},
@@ -175,6 +185,19 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
     __m256d result = {0};
     for (s32 i = 0; i < 4; ++i) {
         result = _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(xs[i], ys[i]), coefs.b[i]), result);
+    }
+#elif defined(BIQUADRATIC_MAP)
+    __m256d ys[3] = {{1 * coefs.b[0][0], 1 * coefs.b[0][1], 1 * coefs.b[0][2], 0},
+                     {y * coefs.b[1][0], y * coefs.b[1][1], y * coefs.b[1][2], 0},
+                     {y * y * coefs.b[2][0], y * y * coefs.b[2][1], y * y * coefs.b[2][2], 0}};
+
+    __m256d xs[3] = {{1, x, x * x, 0},
+                     {1, x, x * x, 0},
+                     {1, x, x * x, 0}};
+
+    __m256d result = {0};
+    for (s32 i = 0; i < 3; ++i) {
+        result = _mm256_add_pd(_mm256_mul_pd(xs[i], ys[i]), result);
     }
 #else
     __m256d ys = {coefs.b[0], coefs.b[1], coefs.b[2] * y, coefs.b[3] * y}; //ys * coefs
@@ -206,7 +229,7 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
     
     // d/dx
     {
-#ifdef BICUBIC_MAP
+#if defined(BICUBIC_MAP)
         __m256d ys[4] = {{1, 1, 1, 1},
                          {y, y, y, y},
                          {y * y, y * y, y * y, y * y},
@@ -220,7 +243,19 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
         __m256d result = {0};
         for (s32 i = 0; i < 4; ++i)
             result = _mm256_add_pd(_mm256_mul_pd(coefs.b[i], _mm256_mul_pd(xs[i], ys[i])), result);
-        
+#elif defined(BIQUADRATIC_MAP)
+        __m256d ys[3] = {{1 * coefs.b[0][0], 1 * coefs.b[0][1], 1 * coefs.b[0][2], 0},
+            {y * coefs.b[1][0], y * coefs.b[1][1], y * coefs.b[1][2], 0},
+            {y * y * coefs.b[2][0], y * y * coefs.b[2][1], y * y * coefs.b[2][2], 0}};
+
+        __m256d xs[3] = {{0, 1, 2 * x, 0},
+                         {0, 1, 2 * x, 0},
+                         {0, 1, 2 * x, 0}};
+
+        __m256d result = {0};
+        for (s32 i = 0; i < 3; ++i) {
+            result = _mm256_add_pd(_mm256_mul_pd(xs[i], ys[i]), result);
+        }
 #else
         __m256d ys = {1 * coefs.b[0], 1 * coefs.b[1], y * coefs.b[2], y * coefs.b[3]};
         __m256d xs = {0, 1, 0, 1};
@@ -238,7 +273,7 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
 
     // d/dy
     {
-#ifdef BICUBIC_MAP
+#if defined(BICUBIC_MAP)
         __m256d ys[4] = {{0, 0, 0, 0},
                           {1, 1, 1, 1},
                           {2 * y, 2 * y, 2 * y, 2 * y},
@@ -252,6 +287,19 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
         __m256d result = {0};
         for (s32 i = 0; i < 4; ++i)
             result = _mm256_add_pd(_mm256_mul_pd(coefs.b[i], _mm256_mul_pd(xs[i], ys[i])), result);
+#elif defined(BIQUADRATIC_MAP)
+        __m256d ys[3] = {{0 * coefs.b[0][0], 0 * coefs.b[0][1], 0 * coefs.b[0][2], 0},
+            {1 * coefs.b[1][0], 1 * coefs.b[1][1], 1 * coefs.b[1][2], 0},
+            {2 * y * coefs.b[2][0], 2 * y * coefs.b[2][1], 2 * y * coefs.b[2][2], 0}};
+
+        __m256d xs[3] = {{1, x, x * x, 0},
+            {1, x, x * x, 0},
+            {1, x, x * x, 0}};
+
+        __m256d result = {0};
+        for (s32 i = 0; i < 3; ++i) {
+            result = _mm256_add_pd(_mm256_mul_pd(xs[i], ys[i]), result);
+        }
 #else
         __m256d ys = {0, 0, 1, 1};
         __m256d xs = {1 * coefs.b[0], x * coefs.b[1], 1 * coefs.b[2], x * coefs.b[3]};

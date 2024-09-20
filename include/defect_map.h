@@ -6,8 +6,10 @@
 #include <immintrin.h>
 
 typedef struct {
-#ifdef BICUBIC_MAP
+#if defined(BICUBIC_MAP)
     __m256d b[4];
+#elif defined(BIQUADRATIC_MAP)
+    __m256d b[3]; //TODO: Check if 4 provides better performance for *reasons*
 #else
     __m256d b;
 #endif

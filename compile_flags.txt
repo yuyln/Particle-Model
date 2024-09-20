@@ -2,3 +2,5 @@
 ./include
 -D
 PROFILING
+-D
+BICUBIC_MAP
