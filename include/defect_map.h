@@ -4,6 +4,7 @@
 #include "v2d.h"
 
 #include <immintrin.h>
+#include <stdio.h>
 
 typedef struct {
 #if defined(BICUBIC_MAP)
@@ -25,8 +26,12 @@ typedef struct {
 
 DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun)(f64, f64, void*), void *user_data);
 void defect_map_calculate_coefs(DefectMap *map);
-f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map);
-v2d defect_map_force_xy(f64 x, f64 y, DefectMap map);
+f64 defect_map_potential_xy(f64 x, f64 y, const DefectMap map);
+v2d defect_map_force_xy(f64 x, f64 y, const DefectMap map);
 void defect_map_deinit(DefectMap *map);
+bool defect_map_serialize_file(FILE *f, const DefectMap *map);
+bool defect_map_serialize(const char *path, const DefectMap *map);
+bool defect_map_deserialize_file(FILE *f, DefectMap *map);
+bool defect_map_deserialize(const char *path, DefectMap *map);
 
 #endif

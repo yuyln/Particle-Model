@@ -1,10 +1,13 @@
 #include "defect_map.h"
 #include "logging.h"
+#include "primitive_types.h"
 #include "utils.h"
 #include "macros.h"
 
+#include <errno.h>
 #include <immintrin.h>
 #include <stdlib.h>
+#include <string.h>
 INCEPTION("I timed bilinear with and without AVX. No big difference. Gonna keep AVX just because");
 
 DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun)(f64, f64, void*), void *user_data) {
@@ -160,7 +163,7 @@ void defect_map_calculate_coefs(DefectMap *it) {
     }
 }
 
-f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
+f64 defect_map_potential_xy(f64 x, f64 y, const DefectMap map) {
     x = boundary_condition_f64(x, map.limit_x);
     y = boundary_condition_f64(y, map.limit_y);
 
@@ -214,7 +217,7 @@ f64 defect_map_potential_xy(f64 x, f64 y, DefectMap map) {
      return _mm_add_pd(_mm256_extractf128_pd(sum, 0), _mm256_extractf128_pd(sum, 1))[0];
 }
 
-v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
+v2d defect_map_force_xy(f64 x, f64 y, const DefectMap map) {
     x = boundary_condition_f64(x, map.limit_x);
     y = boundary_condition_f64(y, map.limit_y);
 
@@ -322,4 +325,166 @@ v2d defect_map_force_xy(f64 x, f64 y, DefectMap map) {
 void defect_map_deinit(DefectMap *map) {
     free(map->map);
     free(map->coefs);
+}
+
+bool defect_map_serialize_file(FILE *f, const DefectMap *map) {
+    bool ret = true;
+    if (!f) {
+        logging_log(LOG_ERROR, "File provided to save DefectMap to is NULL");
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->rows, sizeof(map->rows), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write number of rows of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->cols, sizeof(map->cols), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write number of cols of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->limit_x, sizeof(map->limit_x), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write x limit of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->limit_y, sizeof(map->limit_y), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write y limit of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->dx, sizeof(map->dx), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write dx of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(&map->dy, sizeof(map->dy), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not write dy of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(map->map, sizeof(*map->map), map->cols * map->rows, f) != map->rows * map->cols) {
+        logging_log(LOG_ERROR, "Could not write map values of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fwrite(map->coefs, sizeof(*map->coefs), map->cols * map->rows, f) != map->rows * map->cols) {
+        logging_log(LOG_ERROR, "Could not write map coefs of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    u64 miss_to_align = 32 - (map->rows * map->cols * sizeof(*map->coefs)) % 32;
+    if (fwrite(map->coefs + map->rows * map->cols, 1, miss_to_align, f) != miss_to_align) {
+        logging_log(LOG_ERROR, "Could not write map coefs of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+defer:
+    return ret;
+}
+
+bool defect_map_serialize(const char *path, const DefectMap *map) {
+    FILE *f = fopen(path, "wb");
+    if (!f) {
+        logging_log(LOG_ERROR, "Could not open file %s: %s", path, strerror(errno));
+        return false;
+    }
+    bool ret = defect_map_serialize_file(f, map);
+    fclose(f);
+    return ret;
+}
+
+bool defect_map_deserialize_file(FILE *f, DefectMap *map) {
+    bool ret = true;
+    if (!f) {
+        logging_log(LOG_ERROR, "File provided to load DefectMap from is NULL");
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(&map->rows, sizeof(map->rows), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read number of rows of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(&map->cols, sizeof(map->cols), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read number of cols of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    map->map = calloc(sizeof(*map->map) * map->cols * map->rows, 1);
+    if (!map->map)
+        logging_log(LOG_FATAL, "Could not allocate memory for map values. There is something really wrong. Buy more RAM, lol");
+
+    u64 miss_to_align = 32 - (map->rows * map->cols * sizeof(*map->coefs)) % 32;
+    map->coefs = aligned_alloc(32, map->rows * map->cols * sizeof(*map->coefs) + miss_to_align);
+    if (!map->coefs)
+        logging_log(LOG_FATAL, "Could not allocate memory for map coefs. There is something really wrong. Buy more RAM, lol");
+
+    if (fread(&map->limit_x, sizeof(map->limit_x), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read x limit of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(&map->limit_y, sizeof(map->limit_y), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read y limit of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(&map->dx, sizeof(map->dx), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read dx of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(&map->dy, sizeof(map->dy), 1, f) != 1) {
+        logging_log(LOG_ERROR, "Could not read dy of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(map->map, sizeof(*map->map), map->cols * map->rows, f) !=map->rows * map->cols) {
+        logging_log(LOG_ERROR, "Could not read map values of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(map->coefs, sizeof(*map->coefs), map->cols * map->rows, f) !=map->rows * map->cols) {
+        logging_log(LOG_ERROR, "Could not read map coefs of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+
+    if (fread(map->coefs + map->rows * map->cols, 1, miss_to_align, f) != miss_to_align) {
+        logging_log(LOG_ERROR, "Could not write map coefs of DefetMap to file 0x%016X", map);
+        ret = false;
+        goto defer;
+    }
+defer:
+    return ret;
+}
+
+bool defect_map_deserialize(const char *path, DefectMap *map) {
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        logging_log(LOG_ERROR, "Could not open file %s: %s", path, strerror(errno));
+        return false;
+    }
+    bool ret = defect_map_deserialize_file(f, map);
+    fclose(f);
+    return ret;
 }
