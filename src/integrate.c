@@ -24,7 +24,7 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
 
     for (u64 i = 0; i < ps.len; ++i) {
         da_append(&ctx.ps0, ps.items[i]);
-	ps.items[i].pos_cum = {0};
+	ps.items[i].pos_cum = (v2d){0};
     }
 
     f64 cut = table_get_cut(particle_potential, params.max_value);
@@ -110,7 +110,7 @@ void integrate_context_step(IntegrateContext *ctx) {
                 logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
 	}
 	for (u64 i = 0; i < ctx->ps0.len; ++i) {
-            if (fprintf(ctx->information_file, "%.15e,%.15e", ctx->ps0.items[i].pos_cum.x, ctx->ps0.items[i].pos_cumy) < 0)
+            if (fprintf(ctx->information_file, "%.15e,%.15e", ctx->ps0.items[i].pos_cum.x, ctx->ps0.items[i].pos_cum.y) < 0)
                 logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
 	    if ((i + 1) == ctx->ps0.len) {
 		if (fprintf(ctx->information_file, "\n") < 0)
