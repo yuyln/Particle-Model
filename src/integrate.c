@@ -50,13 +50,20 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
         if (fprintf(ctx.information_file, "x%"PRIu64",y%"PRIu64",", i, i) < 0)
             logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
 
-    for (u64 i = 0; i < ps.len - 1; ++i)
+    for (u64 i = 0; i < ps.len; ++i)
         if (fprintf(ctx.information_file, "vx%"PRIu64",vy%"PRIu64",", i, i) < 0)
             logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
-    {
-        u64 i = ps.len - 1;
-        if (fprintf(ctx.information_file, "vx%"PRIu64",vy%"PRIu64"\n", i, i) < 0)
+    
+    for (u64 i = 0; i < ps.len; ++i) {
+        if (fprintf(ctx.information_file, "cx%"PRIu64",cy%"PRIu64"", i, i) < 0)
             logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
+	if ((i + 1) == ps.len) {
+	    if (fprintf(ctx.information_file, "\n") < 0)
+		logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
+	} else {
+	    if (fprintf(ctx.information_file, ",") < 0)
+		logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
+	}
     }
 
     ctx.avg_vel = calloc(sizeof(*ctx.avg_vel) * ps.len, 1);
