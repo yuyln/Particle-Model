@@ -14,6 +14,7 @@ typedef struct {
     f64 u0;
     f64 radius;
     v2d force_others;
+    v2d pos_cum;
 } Particle;
 
 typedef struct {

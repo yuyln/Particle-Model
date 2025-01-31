@@ -22,8 +22,10 @@ IntegrateContext integrate_context_init(Particles ps, Table particle_potential, 
     IntegrateContext ctx = {0};
     ctx.params = params;
 
-    for (u64 i = 0; i < ps.len; ++i)
+    for (u64 i = 0; i < ps.len; ++i) {
         da_append(&ctx.ps0, ps.items[i]);
+	ps.items[i].pos_cum = {0};
+    }
 
     f64 cut = table_get_cut(particle_potential, params.max_value);
 
@@ -86,13 +88,9 @@ void integrate_context_deinit(IntegrateContext *ctx) {
 void integrate_context_step(IntegrateContext *ctx) {
     for (u64 i = 0; i < ctx->ps0.len; ++i) {
         v2d force = force_at_particle_rk4(ctx->time, ctx->params.dt, i, ctx->bp.ps.items[i], ctx->bp, ctx->potential, ctx->defects, ctx->params.drive_function, ctx->params.drive_data, ctx->params.temperature_function, ctx->params.temperature_data);
-
-        //if (i == 0) {
-        //    v2d df = defect_map_force_xy(ctx->bp.ps.items[i].pos.x, ctx->bp.ps.items[i].pos.y, ctx->defects);
-        //    logging_log(LOG_INFO, "dfx = %.e dfy = %.e", df.x, df.y);
-        //}
-
+	
         ctx->ps0.items[i].pos = v2d_add(ctx->bp.ps.items[i].pos, force);
+        ctx->ps0.items[i].pos_cum = v2d_add(ctx->bp.ps.items[i].pos_cum, force);
         ctx->ps0.items[i].pos = boundary_condition(ctx->ps0.items[i].pos, ctx->defects.limit_x, ctx->defects.limit_y);
         ctx->avg_vel[i] = v2d_add(ctx->avg_vel[i], v2d_fac(force, 1.0 / (ctx->params.dt * ctx->ps0.len)));
         ctx->inst_vel[i] = v2d_fac(force, 1.0 / ctx->params.dt);
@@ -107,14 +105,21 @@ void integrate_context_step(IntegrateContext *ctx) {
             if (fprintf(ctx->information_file, "%.15e,%.15e,", ctx->ps0.items[i].pos.x, ctx->ps0.items[i].pos.y) < 0)
                 logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
 
-        for (u64 i = 0; i < ctx->ps0.len - 1; ++i)
+	for (u64 i = 0; i < ctx->ps0.len; ++i) {
             if (fprintf(ctx->information_file, "%.15e,%.15e,", ctx->inst_vel[i].x, ctx->inst_vel[i].y) < 0)
                 logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
-        {
-            u64 i = ctx->ps0.len - 1;
-            if (fprintf(ctx->information_file, "%.15e,%.15e\n", ctx->inst_vel[i].x, ctx->inst_vel[i].y) < 0)
+	}
+	for (u64 i = 0; i < ctx->ps0.len; ++i) {
+            if (fprintf(ctx->information_file, "%.15e,%.15e", ctx->ps0.items[i].pos_cum.x, ctx->ps0.items[i].pos_cumy) < 0)
                 logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
-        }
+	    if ((i + 1) == ctx->ps0.len) {
+		if (fprintf(ctx->information_file, "\n") < 0)
+		    logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
+	    } else {
+		if (fprintf(ctx->information_file, ",") < 0)
+		    logging_log(LOG_FATAL, "%s:%d Could not write to file \"%s\"", __FILE__, __LINE__);
+	    }
+	}
     }
 
     if (ctx->step % (ctx->expected_steps / 10) == 0)

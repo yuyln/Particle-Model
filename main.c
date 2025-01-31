@@ -41,10 +41,10 @@ f64 particle_potential(f64 distance, void *unused) {
 //@TODO: Avoid jumping around in memory when using inner boxes
 int main(void) {
     Particles ps = {0};
-
+    for (u64 k = 0; k < 25; ++k)
     for (u64 i = 1; i < 2 * n; i += 2)
-        for (u64 j = 1; j < 2 * n; j += 2)
-            da_append(&ps, ((Particle){.pos = v2d_c(j * M_PI / kx, i * M_PI / ky), .magnus = sin(M_PI / 4.0), .damping = cos(M_PI / 4.0), .u0 = 1}));
+    for (u64 j = 1; j < 2 * n; j += 2)
+    da_append(&ps, ((Particle){.pos = v2d_c(j * M_PI / kx, i * M_PI / ky), .magnus = sin(M_PI / 4.0), .damping = cos(M_PI / 4.0), .u0 = 1}));
 
     {
         s32 yc0 = M_PI * 5 / ky;
