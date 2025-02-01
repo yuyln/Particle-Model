@@ -27,7 +27,7 @@ DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun
     if (!ret.coefs)
         logging_log(LOG_FATAL, "Could not allocate %"PRIu64"x%"PRIu64" defect map coefs", rows, cols);
 
-    u64 row = 0; //MSVC...........
+    u64 row = 0; //MSVC...
 #pragma omp parallel for
     for (row = 0; row < rows; ++row) {
         f64 y = row / (f64)rows;
@@ -44,7 +44,7 @@ DefectMap defect_map_init(u64 rows, u64 cols, v2d limit_x, v2d limit_y, f64(*fun
 }
 
 void defect_map_calculate_coefs(DefectMap *it) {
-    u64 row = 0; //MSVC......
+    u64 row = 0; //MSVC...
 #pragma omp parallel for
     for (row = 0; row < it->rows; ++row) {
         for (u64 col = 0; col < it->cols; ++col) {
@@ -107,7 +107,7 @@ void defect_map_calculate_coefs(DefectMap *it) {
                 { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0}, { 0,  0,  0,  0},
                 { 0,  0,  0,  0}, { 2,  0, -2,  0}, { 0,  0,  0,  0}, { 1,  0,  1,  0},
                 {-6,  6,  6, -6}, {-4, -2,  4,  2}, {-3,  3, -3,  3}, {-2, -1, -2, -1},
-                { 4, -4, -4,  4}, { 2,  2, -2, -2}, { 2, -2,  2, -2}, { 1,  1,  1,  1} 
+                { 4, -4, -4,  4}, { 2,  2, -2, -2}, { 2, -2,  2, -2}, { 1,  1,  1,  1}
             };
 
             __m256d X[4] = {{f[0], f[1], f[2], f[3]},
@@ -122,7 +122,7 @@ void defect_map_calculate_coefs(DefectMap *it) {
                     line_m[j] = _mm256_mul_pd(A[i * 4 + j], X[j]);
 
                     __m256d x1 = _mm256_setzero_pd();
-                    
+
                     // calculate 4 two-element horizontal sums:
                     // lower 64 bits contain x1[0] + x1[1]
                     // next 64 bits contain x2[0] + x2[1]
@@ -169,6 +169,8 @@ f64 defect_map_potential_xy(f64 x, f64 y, const DefectMap map) {
 
     s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
     s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
+    idx = ((idx % (s64)map.cols) + (s64)map.cols) % (s64)map.cols;
+    idy = ((idy % (s64)map.rows) + (s64)map.rows) % (s64)map.rows;
     MapCoeff coefs = map.coefs[idy * map.cols + idx];
 
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
@@ -223,13 +225,16 @@ v2d defect_map_force_xy(f64 x, f64 y, const DefectMap map) {
 
     s64 idx = (x - map.limit_x.p[0]) / (map.limit_x.p[1] - map.limit_x.p[0]) * map.cols;
     s64 idy = (y - map.limit_y.p[0]) / (map.limit_y.p[1] - map.limit_y.p[0]) * map.rows;
+    idx = ((idx % (s64)map.cols) + (s64)map.cols) % (s64)map.cols;
+    idy = ((idy % (s64)map.rows) + (s64)map.rows) % (s64)map.rows;
+
     MapCoeff coefs = map.coefs[idy * map.cols + idx];
 
     x = (x - lerp(map.limit_x.p[0], map.limit_x.p[1], idx / (f64)map.cols)) / map.dx;
     y = (y - lerp(map.limit_y.p[0], map.limit_y.p[1], idy / (f64)map.rows)) / map.dy;
 
     v2d ret = v2d_s(0);
-    
+
     // d/dx
     {
 #if defined(BICUBIC_MAP)
